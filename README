@@ -1,3 +1,25 @@
 # Wordpress plugin for Error Code 451
 
 This plugin aims at making it easier for Wordpress site administrators to mark pages or posts as being censored when they get asked by a legal entity to do so. So, instead of simply taking down the content, they will be able to mark it as censored and inform users about this very fact by adding the URL of the entity who ordered the takedown, as well as an optional description.
+
+## What does the user see?
+
+The user gets served a page telling them "Error 451 - unavailable for legal reasons", optionally it will display the blocking authority and a description.
+
+
+## TODO
+
+* what if a page is blocked in two different countries for 2 different reasons?
+* What happens to a post in a loop?
+* test a page vs a post
+* what about custom post formats?
+* test all countries
+* improve visual user message.
+* sanitize commaseparated list
+* report to the crawler: should this be done by default? Which information should be public and which obfuscated?
+
+## Ideas
+
+* create a page/xml/sitemap will all blocked resources on the domain
+* scheduled block: add an expiry date for the block
+* propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility."
