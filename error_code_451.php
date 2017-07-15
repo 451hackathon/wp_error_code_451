@@ -93,6 +93,7 @@ function read_json($filename) {
 // this will be useful for having a sitemap of blocked files as well as for the loops and RSS loop.
 function find_blocked_content_ids() {
 	global $cfg;
+	$i = 0;
 	// we want to create an array of all blocked content
 	$blocked_content_args = array(
 		'meta_query' => array(
@@ -104,8 +105,9 @@ function find_blocked_content_ids() {
 	);
 	$blocked_content_query = new WP_Query( $blocked_content_args );
     foreach ($blocked_content_query->posts as $post) {
-		$blocked_content_ids[] = $post->ID;
+		$blocked_content_ids[$i]['post_id'] = $post->ID;
 		// fixme: we need to add the country codes in which the posts are blocked as well as some other information which we want to display in the loop.
+		$i++;
     }
     if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
 		echo "Write of JSON file failed.";
@@ -121,7 +123,10 @@ function error_451_check_partial_blocked_content($query) {
     $blocked_content_ids = read_json($cfg['json_filename']);
 	if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
 		// this would remove the posts entirely from the loop.
-	    $query->set('post__not_in', $blocked_content_ids);
+		foreach($blocked_content_ids as $blocked_content) {
+			$post_ids = $blocked_content['post_id'];
+		}
+	    $query->set('post__not_in', $post_ids);
 		// instead, we want to modify their title and content, but only in the areas where they are blocked!
 	}
 }
@@ -158,7 +163,7 @@ function error_451_check_blocked() {
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
     		$user_error_message  = '<html><head>
-                <script>
+                <script type="text/javascript">
                   function setIgnore() {
                       var date = new Date();
 		                  date.setTime(date.getTime()+(30*24*60*60*1000));
@@ -177,7 +182,7 @@ function error_451_check_blocked() {
     		}
         $options = get_option('error_code_451_option_name');
         if($options['CSV']) {
-              $user_error_message .= '<p>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</p>';
+              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
         }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
