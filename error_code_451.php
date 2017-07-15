@@ -57,6 +57,8 @@ add_action('plugins_loaded', 'error_451_init');
  2 = blocking-authority (URI)
  3 = Geocode field (comma separated list of country codes)
  additional header: blocked-by (automatically attributed URI)
+
+ // Post-PoC : what if a page is blocked in two different countries for 2 different reasons?
 */
 
 /*
