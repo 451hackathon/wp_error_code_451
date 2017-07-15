@@ -123,13 +123,20 @@ function error_451_check_blocked() {
 		$error_code = 451;
 		$site_url = site_url();
 		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
-		$http_response_code = http_response_code($error_code);
-		status_header(451, "Unavailable For Legal Reasons");
-		header("HTTP/1.1 451 Unavailable For Legal Reasons", false);
+
+		// send additional headers
 		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
 		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
-		wp_redirect("http://makechange.earth/451", 451);
-		echo "lol 451";
+
+		// redirect to get the correct HTTP status code for this page.
+		wp_redirect("/451", 451);
+		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
+		if(!empty($blocking_authority)) {
+    	    $user_error_message .= '<p>This content has been blocked by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+		}
+		$user_error_message .= '<p> This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+		$user_error_message .= '</body></html>';
+		echo $user_error_message;
 		exit;
     }
 }
