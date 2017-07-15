@@ -50,18 +50,6 @@ function get_the_user_ip() {
     return apply_filters( 'wpb_get_ip', $ip );
 }
 
-// make it possible for a site admin to block a URL
-// - serve 451 http_response_code
-// send HTTP response CODE
-// FIXME: implement geoblocking
-
-
-$http_response_code = http_response_code();
-if($http_response_code == 451) {
-	// get additional header: "blocked-by"
-	// contact the webcrawler
-}
-
 // - based on geocodes
 // - make it possible to send blocked-by header
 // Admin page with URLs to block (list and checkboxes)
