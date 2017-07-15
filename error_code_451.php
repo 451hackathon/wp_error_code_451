@@ -109,7 +109,7 @@ function error_451_check_blocked() {
     //get blocked countries from post metadata
     $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
 
-    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") t commi{
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
         if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
             $error_code = 451;
     		$site_url = site_url();
@@ -133,8 +133,8 @@ function error_451_check_blocked() {
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
     		exit;
+        }
     }
-  }
 }
 
 /* Check for blocked content on page load */
@@ -194,36 +194,35 @@ function error_451_meta_box( $post ) {
 /* Save the meta box's post metadata. */
 function error_451_save_blocking_meta( $post_id, $post ) {
 
-  /* Verify the nonce before proceeding. */
-  if ( !isset( $_POST['error_451_blocking_nonce'] ) || !wp_verify_nonce( $_POST['error_451_blocking_nonce'], basename( __FILE__ ) ) )
-    return $post_id;
+    /* Verify the nonce before proceeding. */
+    if ( !isset( $_POST['error_451_blocking_nonce'] ) || !wp_verify_nonce( $_POST['error_451_blocking_nonce'], basename( __FILE__ ) ) )
+      return $post_id;
 
-  /* Get the post type object. */
-  $post_type = get_post_type_object( $post->post_type );
+    /* Get the post type object. */
+    $post_type = get_post_type_object( $post->post_type );
 
-  /* Check if the current user has permission to edit the post. */
-  if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
-    return $post_id;
+    /* Check if the current user has permission to edit the post. */
+    if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+        return $post_id;
 
-  // which meta keys do we want to update?
-  $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
+    // which meta keys do we want to update?
+    $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
 
-  /* Get the posted data and sanitize it. */
+    /* Get the posted data and sanitize it. */
+    foreach($meta_keys as $meta_key) {
+        $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 
-  foreach($meta_keys as $meta_key) {
-    $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+        /* Get the meta value of the custom field key. */
+        $meta_value = get_post_meta( $post_id, $meta_key, true );
 
-    /* Get the meta value of the custom field key. */
-	$meta_value = get_post_meta( $post_id, $meta_key, true );
+        /* If a new meta value was added and there was no previous value, add it. */
+	    if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
+		    add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
+        }
 
-	/* If a new meta value was added and there was no previous value, add it. */
-	if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
-		add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
-	}
-
-	/* If the new meta value does not match the old value, update it. */
-	elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
-		update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
+	    /* If the new meta value does not match the old value, update it. */
+	    elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
+		    update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
 	}
 
 	/* If there is no new meta value but an old value exists, delete it. */
@@ -231,7 +230,7 @@ function error_451_save_blocking_meta( $post_id, $post ) {
 		delete_post_meta( $post_id, $meta_key, $meta_value );
 	}
 
-  }
+    }
 }
 
 /* Fire meta box setup function on the post editor screen. */
