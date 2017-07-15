@@ -71,15 +71,6 @@ function sanitize_comma_separated($input) {
     return $input;
 }
 
-function error_451_check_partial_blocked_content() {
-	if(is_archive() OR is_category()) {
-		echo "is cat";
-	}
-}
-
-/* Check for blocked content on page load */
-add_action( 'init', 'error_451_check_partial_blocked_content');
-
 /* writes array data to JSON */
 function write_json($data, $filename) {
     $plugin_dir = realpath(dirname(__FILE__));
@@ -119,6 +110,13 @@ function find_blocked_content_ids() {
 // save all blocked content to JSON file when updating a post.
 add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 
+function error_451_check_partial_blocked_content() {
+	if(is_archive() OR is_category()) {
+		echo "is cat";
+	}
+}
+/* Check for blocked content on page load */
+add_action( 'init', 'error_451_check_partial_blocked_content');
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
