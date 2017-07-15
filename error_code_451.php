@@ -11,7 +11,7 @@ Domain Path: /languages/
 */
 
 /*
-    Copyright 2017 Ulrike Uhlig <u@curlybracket.net>
+    Copyright 2017 Ulrike <u@451f.org>, Tara
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as
@@ -116,12 +116,6 @@ $http_response_code = http_response_code();
 if($http_response_code == 451) {
 	// get additional header: "blocked-by"
 	// contact the webcrawler
-}
-
-function update_meta_blocking_authority($post_id, $value) {
-	$meta_key = "blocking-authority";
-	$meta_value = $value;
-	update_post_meta( $post_id, $meta_key, $meta_value);
 }
 
 /* Meta box setup function. */
