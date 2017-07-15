@@ -105,6 +105,7 @@ function find_blocked_content_ids() {
 	$blocked_content_query = new WP_Query( $blocked_content_args );
     foreach ($blocked_content_query->posts as $post) {
 		$blocked_content_ids[] = $post->ID;
+		// fixme: we need to add the country codes in which the posts are blocked as well as some other information which we want to display in the loop.
     }
     if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
 		echo "Write of JSON file failed.";
@@ -115,13 +116,13 @@ function find_blocked_content_ids() {
 add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 
 // alter the query to not display these posts.
-// FIXME:  instead, simply modify their content and title to display the 451 error.
 function error_451_check_partial_blocked_content($query) {
 	global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
-	var_dump($blocked_content_ids);
 	if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
+		// this would remove the posts entirely from the loop.
 	    $query->set('post__not_in', $blocked_content_ids);
+		// instead, we want to modify their title and content, but only in the areas where they are blocked!
 	}
 }
 
