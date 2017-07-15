@@ -78,7 +78,7 @@ function error_451_check_blocked() {
     //get blocked countries from post metadata
     $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
 
-    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin)) {
         if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
             $error_code = 451;
     		$site_url = site_url();
