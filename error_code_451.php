@@ -35,15 +35,6 @@ function error_code_451_init() {
 add_action('plugins_loaded', 'error_code_451_init');
 
 // make it possible for a site admin to block a URL
-// - serve 451 http_response_code
-// send HTTP response CODE
-// FIXME: implement geoblocking
-$http_response_code = http_response_code();
-if($http_response_code == 451) {
-	// get additional header: "blocked-by"
-	// contact the webcrawler
-}
-
 // - based on geocodes
 // - make it possible to send blocked-by header
 // Admin page with URLs to block (list and checkboxes)
@@ -73,4 +64,18 @@ What would the user see?
 -> would get served a page telling them "Error 451 - blocked for legal reasons"
 -> should also say "by $blocking_authority"
 */
+
+// FIXME: implement geoblocking
+if($client_geo_origin == "SOMETHING") {
+	// - serve 451 http_response_code
+	$http_response_code = http_response_code(451);
+	// send additional header: "blocked-by"
+}
+
+// This will get the HTTP response code of the current page.
+$http_response_code = http_response_code();
+if($http_response_code == 451) {
+	// get additional header: "blocked-by"
+	// contact the webcrawler
+}
 ?>
