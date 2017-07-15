@@ -21,18 +21,17 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
 
 ## TODO
 
-* What happens to a post in a loop?
-  -> we will only block the single resource.
-  -> when in a category or archive, we will simply not display the post.
-     -> we will need to modify the loops for this.
-  -> we need to block/hide posts in RSS, too.
-* report to the crawler: should this be done by default? Which information should be public and which obfuscated?
-* create a page/xml/sitemap with all blocked resources on the domain -> there is a JSON file
-* what about custom post formats?
-* improve visual user message.
-
-## Ideas for improvement
-
-* propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility."
-* scheduled block: add an expiry date for the block
 * what if a page is blocked in two different countries for 2 different reasons?
+* What happens to a post in a loop?
+* test a page vs a post (Tara: DONE! Ready for testing)
+* what about custom post formats?
+* test all countries
+* improve visual user message.
+* sanitize commaseparated list
+* report to the crawler: should this be done by default? Which information should be public and which obfuscated?
+
+## Ideas
+
+* create a page/xml/sitemap will all blocked resources on the domain
+* scheduled block: add an expiry date for the block
+* propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility." (TARA: DONE, please test.)
