@@ -27,6 +27,7 @@ Domain Path: /languages/
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+$cfg['json_filename'] = "blocked_content_ids.json";
 
 /* Plugin l10n */
 function error_code_451_init() {
@@ -83,12 +84,15 @@ function write_json($data, $filename) {
 /* read arraay from JSON */
 function read_json($filename) {
     $plugin_dir = realpath(dirname(__FILE__));
-    $data = json_decode("$plugin_dir/$filename");
-    return $data;
+	if(file_exists("$plugin_dir/$filename")) {
+		$data = json_decode(file_get_contents("$plugin_dir/$filename"));
+		return $data;
+	}
 }
 
 // this will be useful for having a sitemap of blocked files as well as for the loops and RSS loop.
 function find_blocked_content_ids() {
+	global $cfg;
 	// we want to create an array of all blocked content
 	$blocked_content_args = array(
 		'meta_query' => array(
@@ -102,7 +106,7 @@ function find_blocked_content_ids() {
     foreach ($blocked_content_query->posts as $post) {
 		$blocked_content_ids[] = $post->ID;
     }
-    if(write_json($blocked_content_ids, "blocked_content_ids.json") !== true) {
+    if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
 		echo "Write of JSON file failed.";
     }
 }
@@ -110,13 +114,19 @@ function find_blocked_content_ids() {
 // save all blocked content to JSON file when updating a post.
 add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 
-function error_451_check_partial_blocked_content() {
-	if(is_archive() OR is_category()) {
-		echo "is cat";
+// alter the query to not display these posts.
+// FIXME:  instead, simply modify their content and title to display the 451 error.
+function error_451_check_partial_blocked_content($query) {
+	global $cfg;
+    $blocked_content_ids = read_json($cfg['json_filename']);
+	var_dump($blocked_content_ids);
+	if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
+	    $query->set('post__not_in', $blocked_content_ids);
 	}
 }
+
 /* Check for blocked content on page load */
-add_action( 'init', 'error_451_check_partial_blocked_content');
+add_action( 'pre_get_posts', 'error_451_check_partial_blocked_content');
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
