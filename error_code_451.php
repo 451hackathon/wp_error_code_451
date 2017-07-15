@@ -27,6 +27,7 @@ Domain Path: /languages/
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+
 /* Plugin l10n */
 function error_code_451_init() {
     $plugin_dir = basename(dirname(__FILE__));
@@ -34,7 +35,49 @@ function error_code_451_init() {
 }
 add_action('plugins_loaded', 'error_451_init');
 
+
+/* get user IP */
+function get_the_user_ip() {
+if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
+//check ip from share internet
+$ip = $_SERVER['HTTP_CLIENT_IP'];
+} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+//to check ip is pass from proxy
+$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+} else {
+$ip = $_SERVER['REMOTE_ADDR'];
+}
+return apply_filters( 'wpb_get_ip', $ip );
+}
+
 // make it possible for a site admin to block a URL
+<<<<<<< HEAD
+// - serve 451 http_response_code
+// send HTTP response CODE
+// FIXME: implement geoblocking
+$json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
+$options = array(
+CURLOPT_RETURNTRANSFER => true,
+CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
+);
+$ch = curl_init( $json_url );
+curl_setopt_array( $ch, $options );
+$ch_result = curl_exec($ch);
+$geo_ip = json_decode($ch_result);
+
+//echo $geo_ip->country_code;
+
+
+
+
+$http_response_code = http_response_code();
+if($http_response_code == 451) {
+	// get additional header: "blocked-by"
+	// contact the webcrawler
+}
+
+=======
+>>>>>>> 2cb8d404e36b57979938f6434c0f691d89b9ccca
 // - based on geocodes
 // - make it possible to send blocked-by header
 // Admin page with URLs to block (list and checkboxes)
