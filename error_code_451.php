@@ -71,6 +71,55 @@ function sanitize_comma_separated($input) {
     return $input;
 }
 
+function error_451_check_partial_blocked_content() {
+	if(is_archive() OR is_category()) {
+		echo "is cat";
+	}
+}
+
+/* Check for blocked content on page load */
+add_action( 'init', 'error_451_check_partial_blocked_content');
+
+/* writes array data to JSON */
+function write_json($data, $filename) {
+    $plugin_dir = realpath(dirname(__FILE__));
+    $handler = fopen("$plugin_dir/$filename", "w+");
+    fwrite($handler, json_encode($data));
+    fclose($handler);
+    return true;
+}
+
+/* read arraay from JSON */
+function read_json($filename) {
+    $plugin_dir = realpath(dirname(__FILE__));
+    $data = json_decode("$plugin_dir/$filename");
+    return $data;
+}
+
+// this will be useful for having a sitemap of blocked files as well as for the loops and RSS loop.
+function find_blocked_content_ids() {
+	// we want to create an array of all blocked content
+	$blocked_content_args = array(
+		'meta_query' => array(
+			array(
+				'key' => 'error_451_blocking',
+				'value' => 'yes'
+			)
+		)
+	);
+	$blocked_content_query = new WP_Query( $blocked_content_args );
+    foreach ($blocked_content_query->posts as $post) {
+		$blocked_content_ids[] = $post->ID;
+    }
+    if(write_json($blocked_content_ids, "blocked_content_ids.json") !== true) {
+		echo "Write of JSON file failed.";
+    }
+}
+
+// save all blocked content to JSON file when updating a post.
+add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
+
+
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
 	// Get access to the current WordPress object instance
