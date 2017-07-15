@@ -241,10 +241,20 @@ function error_451_save_blocking_meta( $post_id, $post ) {
     // which meta keys do we want to update?
     $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
 
+
     /* Get the posted data and sanitize it. */
     foreach($meta_keys as $meta_key) {
 		if($meta_key == 'error_451_blocking_countries') {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_comma_separated( $_POST[$meta_key] ) : '' );
+		} else if ($meta_key = 'error_451_blocking') {
+            if ($_POST['error_451_blocking'] == "yes")
+            {
+                report_blocking(( isset( $_POST['error_451_blocking_authority'] ) ? sanitize_text_field( $_POST['error_451_blocking_authority'] ) : '' ),
+                                ( isset( $_POST['error_451_blocking_countries'] ) ? sanitize_text_field( $_POST['error_451_blocking_countries'] ) : '' ),
+                                ( isset( $_POST['error_451_blocking_description'] ) ? sanitize_text_field( $_POST['error_451_blocking_description'] ) : '' )
+              );
+            }
+            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 		} else {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 		}
@@ -438,4 +448,38 @@ class errorCode451SettingsPage {
 if( is_admin() )
     $error_code_451_settings_page = new errorCode451SettingsPage();
 
+
+function report_blocking ($authority, $countries, $description) {
+        $options = get_option('error_code_451_option_name');
+        if(!empty($options['REPORTING_URL']))
+        {
+          $json_string = "{
+                            date: 2017-07-14T02:26:46.681Z,
+                            creator: 'WP Error Code 451 Plugin',
+                            version: '0.1',
+                            reporter [opt]: [uuid, generated and persisted by crawler instance],
+                            url: 'https://example.org',
+                            status: 451,
+                            statusText: '".$description."',
+                            blockedBy: 'https://451wordpressplugin.com',
+                            blockingAuthority: '".$authority."'
+                            blockedIn: '".$countries."'
+                            clientIP [opt]: '192.0.2.4',
+                            clientLocation [opt]: {FIXME:locality/state/country?},
+                            originIP [opt]: '192.0.2.207'
+                          }";
+          $ch = curl_init($options['REPORTING_URL']);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+          curl_setopt($ch, CURLOPT_POSTFIELDS, $json_string);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                       'Content-Type: application/json',
+                       'Content-Length: ' . strlen($json_string))
+                      );
+
+         return curl_exec($ch);
+
+        }
+
+    }
 ?>
