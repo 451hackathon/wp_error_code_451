@@ -93,6 +93,20 @@ What would the user see?
 -> would get served a page telling them "Error 451 - unavailable for legal reasons"
 -> should also say "by $blocking_authority"
 */
+function get_geocode () {
+
+      // Get visitor geo origin
+      $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
+      $options = array(
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
+      );
+      $ch = curl_init( $json_url );
+      curl_setopt_array( $ch, $options );
+      $ch_result = curl_exec($ch);
+      $geo_ip = json_decode($ch_result);
+      return $geo_ip->country_code;
+}
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
@@ -103,46 +117,40 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
-    // Get visitor geo origin
-    $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
-    $options = array(
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
-    );
-    $ch = curl_init( $json_url );
-    curl_setopt_array( $ch, $options );
-    $ch_result = curl_exec($ch);
-    $geo_ip = json_decode($ch_result);
-    $client_geo_origin = $geo_ip->country_code;
-	//echo $client_geo_origin;
+  $client_geo_origin = get_geocode();
 
-    //get blocked countries from post metadata
-    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
+  //get blocked countries from post metadata
+  $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
 
-    if( in_array($client_geo_origin, $blocked_countries)) {
-		$error_code = 451;
-		$site_url = site_url();
-		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
-		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
-		// send additional headers
-		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
-		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
 
-		// redirect to get the correct HTTP status code for this page.
-		wp_redirect("/451", 451);
-		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
-		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
-		if(!empty($blocking_description)) {
-    	    $user_error_message .= '<p>'.$blocking_description.'</p>';
-		}
-		if(!empty($blocking_authority)) {
-    	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
-		}
-		$user_error_message .= '</body></html>';
-		echo $user_error_message;
-		exit;
+  if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes")
+  {
+      if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
+          $error_code = 451;
+    		  $site_url = site_url();
+    		  $blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+    		  $blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
+
+    		// send additional headers
+    		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
+    		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
+
+    		// redirect to get the correct HTTP status code for this page.
+    		wp_redirect("/451", 451);
+    		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
+    		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+    		if(!empty($blocking_description)) {
+        	    $user_error_message .= '<p>'.$blocking_description.'</p>';
+    		}
+    		if(!empty($blocking_authority)) {
+        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+    		}
+    		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
+    		echo $user_error_message;
+    		exit;
     }
+  }
 }
 
 /* Check for blocked content on page load */
