@@ -104,17 +104,17 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
-  $client_geo_origin = get_client_geocode();
+    $client_geo_origin = get_client_geocode();
 
-  //get blocked countries from post metadata
-  $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
+    //get blocked countries from post metadata
+    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
 
-  if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
-      if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
-          $error_code = 451;
-    		  $site_url = site_url();
-    		  $blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
-    		  $blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") t commi{
+        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
+            $error_code = 451;
+    		$site_url = site_url();
+    		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+    		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
     		// send additional headers
     		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
