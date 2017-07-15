@@ -81,8 +81,7 @@ What would the user see?
 -> would get served a page telling them "Error 451 - unavailable for legal reasons"
 -> should also say "by $blocking_authority"
 */
-function get_geocode () {
-
+function get_client_geocode() {
       // Get visitor geo origin
       $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
       $options = array(
@@ -105,7 +104,7 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
-  $client_geo_origin = get_geocode();
+  $client_geo_origin = get_client_geocode();
 
   //get blocked countries from post metadata
   $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
