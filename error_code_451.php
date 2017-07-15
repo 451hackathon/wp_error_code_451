@@ -2,7 +2,7 @@
 /*
 Plugin Name: Error Code 451
 Plugin URI: http://github.com/451hackathon/wpplugin
-Description: Wordpress plugin to interact with the Blocked-Middleware by OpenRightsGroup. API credentials can be configured via a settings page.
+Description: Wordpress plugin to block pages using Error Code 451.
 Version: 0.1
 Author: Ulrike Uhlig
 License: GPL3+
