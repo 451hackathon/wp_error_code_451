@@ -158,7 +158,7 @@ function error_451_check_blocked() {
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
     		$user_error_message  = '<html><head>
-                <script>
+                <script type="text/javascript">
                   function setIgnore() {
                       var date = new Date();
 		                  date.setTime(date.getTime()+(30*24*60*60*1000));
@@ -176,7 +176,7 @@ function error_451_check_blocked() {
         	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
     		}
         if(true) {
-              $user_error_message .= '<p>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</p>';
+              $user_error_message .= '<p><strong>If you believe this message is an error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
         }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
