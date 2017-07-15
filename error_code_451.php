@@ -35,64 +35,33 @@ function error_code_451_init() {
 }
 add_action('plugins_loaded', 'error_code_451_init');
 
-
 /* get user IP */
 function get_the_user_ip() {
-if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-//check ip from share internet
-$ip = $_SERVER['HTTP_CLIENT_IP'];
-} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-//to check ip is pass from proxy
-$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-} else {
-$ip = $_SERVER['REMOTE_ADDR'];
-}
-return apply_filters( 'wpb_get_ip', $ip );
-}
-
-// make it possible for a site admin to block a URL
-// - serve 451 http_response_code
-// send HTTP response CODE
-// FIXME: implement geoblocking
-
-
-$http_response_code = http_response_code();
-if($http_response_code == 451) {
-	// get additional header: "blocked-by"
-	// contact the webcrawler
+    if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
+        // check ip from share internet
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+        // to check ip is pass from proxy
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'];
+    }
+    return apply_filters( 'wpb_get_ip', $ip );
 }
 
-// - based on geocodes
-// - make it possible to send blocked-by header
-// Admin page with URLs to block (list and checkboxes)
-// or field in post editor with checkbox / we could use post_meta for this.
-// make it possible to allow the admin to report the block to the webcrawler
-
-/*
-// https://tools.ietf.org/html/rfc7725
- When an entity blocks access to a resource and returns status 451, it
- SHOULD include a "Link" HTTP header field [RFC5988] whose value is a
- URI reference [RFC3986] identifying itself.  When used for this
- purpose, the "Link" header field MUST have a "rel" parameter whose
- value is "blocked-by".
-
- - Would be the website itself = the implementor
- - extra field blocking-authority = specify the entity that requested the blocking
-
- -> post_meta fields which we need to create
- 1 = blocked boolean,
- 2 = blocking-authority (URI)
- 3 = Geocode field (comma separated list of country codes)
- additional header: blocked-by (automatically attributed URI)
-
- // Post-PoC : what if a page is blocked in two different countries for 2 different reasons?
-*/
-
-/*
-What would the user see?
--> would get served a page telling them "Error 451 - unavailable for legal reasons"
--> should also say "by $blocking_authority"
-*/
+function get_client_geocode() {
+      // Get visitor geo origin
+      $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
+      $options = array(
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
+      );
+      $ch = curl_init( $json_url );
+      curl_setopt_array( $ch, $options );
+      $ch_result = curl_exec($ch);
+      $geo_ip = json_decode($ch_result);
+      return $geo_ip->country_code;
+}
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
@@ -103,45 +72,36 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
-    // Get visitor geo origin
-    $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
-    $options = array(
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
-    );
-    $ch = curl_init( $json_url );
-    curl_setopt_array( $ch, $options );
-    $ch_result = curl_exec($ch);
-    $geo_ip = json_decode($ch_result);
-    $client_geo_origin = $geo_ip->country_code;
-	//echo $client_geo_origin;
+    $client_geo_origin = get_client_geocode();
 
     //get blocked countries from post metadata
-    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
+    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
 
-    if( in_array($client_geo_origin, $blocked_countries)) {
-		$error_code = 451;
-		$site_url = site_url();
-		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
-		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
+        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
+            $error_code = 451;
+    		$site_url = site_url();
+    		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+    		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
-		// send additional headers
-		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
-		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
+    		// send additional headers
+    		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
+    		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
 
-		// redirect to get the correct HTTP status code for this page.
-		wp_redirect("/451", 451);
-		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
-		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
-		if(!empty($blocking_description)) {
-    	    $user_error_message .= '<p>'.$blocking_description.'</p>';
-		}
-		if(!empty($blocking_authority)) {
-    	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
-		}
-		$user_error_message .= '</body></html>';
-		echo $user_error_message;
-		exit;
+    		// redirect to get the correct HTTP status code for this page.
+    		wp_redirect("/451", 451);
+    		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
+    		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+    		if(!empty($blocking_description)) {
+        	    $user_error_message .= '<p>'.$blocking_description.'</p>';
+    		}
+    		if(!empty($blocking_authority)) {
+        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+    		}
+    		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
+    		echo $user_error_message;
+    		exit;
+        }
     }
 }
 
@@ -167,6 +127,16 @@ function error_451_add_post_meta_boxes() {
         'side',         // Context
         'default'       // Priority
   );
+
+
+      add_meta_box(
+          'error-451-blocking-page', // Unique ID
+          esc_html__( 'Configure blocking / Error 451', 'error-451' ), // Title
+          'error_451_meta_box',  // Callback function
+          'page',         // Admin page (or post type)
+          'side',         // Context
+          'default'       // Priority
+      );
 }
 
 /* Display the post meta box. */
@@ -202,36 +172,35 @@ function error_451_meta_box( $post ) {
 /* Save the meta box's post metadata. */
 function error_451_save_blocking_meta( $post_id, $post ) {
 
-  /* Verify the nonce before proceeding. */
-  if ( !isset( $_POST['error_451_blocking_nonce'] ) || !wp_verify_nonce( $_POST['error_451_blocking_nonce'], basename( __FILE__ ) ) )
-    return $post_id;
+    /* Verify the nonce before proceeding. */
+    if ( !isset( $_POST['error_451_blocking_nonce'] ) || !wp_verify_nonce( $_POST['error_451_blocking_nonce'], basename( __FILE__ ) ) )
+      return $post_id;
 
-  /* Get the post type object. */
-  $post_type = get_post_type_object( $post->post_type );
+    /* Get the post type object. */
+    $post_type = get_post_type_object( $post->post_type );
 
-  /* Check if the current user has permission to edit the post. */
-  if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
-    return $post_id;
+    /* Check if the current user has permission to edit the post. */
+    if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+        return $post_id;
 
-  // which meta keys do we want to update?
-  $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
+    // which meta keys do we want to update?
+    $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
 
-  /* Get the posted data and sanitize it. */
+    /* Get the posted data and sanitize it. */
+    foreach($meta_keys as $meta_key) {
+        $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 
-  foreach($meta_keys as $meta_key) {
-    $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+        /* Get the meta value of the custom field key. */
+        $meta_value = get_post_meta( $post_id, $meta_key, true );
 
-    /* Get the meta value of the custom field key. */
-	$meta_value = get_post_meta( $post_id, $meta_key, true );
+        /* If a new meta value was added and there was no previous value, add it. */
+	    if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
+		    add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
+        }
 
-	/* If a new meta value was added and there was no previous value, add it. */
-	if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
-		add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
-	}
-
-	/* If the new meta value does not match the old value, update it. */
-	elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
-		update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
+	    /* If the new meta value does not match the old value, update it. */
+	    elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
+		    update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
 	}
 
 	/* If there is no new meta value but an old value exists, delete it. */
@@ -239,7 +208,7 @@ function error_451_save_blocking_meta( $post_id, $post ) {
 		delete_post_meta( $post_id, $meta_key, $meta_value );
 	}
 
-  }
+    }
 }
 
 /* Fire meta box setup function on the post editor screen. */
