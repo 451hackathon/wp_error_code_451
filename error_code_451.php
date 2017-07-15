@@ -60,7 +60,8 @@ function get_client_geocode() {
       curl_setopt_array( $ch, $options );
       $ch_result = curl_exec($ch);
       $geo_ip = json_decode($ch_result);
-      return $geo_ip->country_code;
+	  if($geo_ip->country_code)
+          return $geo_ip->country_code;
 }
 
 // Serve 451 http_response_code and send additional headers
