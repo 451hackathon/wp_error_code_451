@@ -60,8 +60,7 @@ function get_client_geocode() {
       curl_setopt_array( $ch, $options );
       $ch_result = curl_exec($ch);
       $geo_ip = json_decode($ch_result);
-	  if($geo_ip->country_code)
-          return $geo_ip->country_code;
+      return $geo_ip->country_code;
 }
 
 // Serve 451 http_response_code and send additional headers
@@ -76,10 +75,10 @@ function error_451_check_blocked() {
     $client_geo_origin = get_client_geocode();
 
     //get blocked countries from post metadata
-    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
+    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
 
     if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
-        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
+        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
             $error_code = 451;
     		$site_url = site_url();
     		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
@@ -218,4 +217,166 @@ add_action( 'load-post-new.php', 'error_451_post_meta_boxes_setup' );
 
 /* Save post meta on the 'save_post' hook. */
 add_action( 'save_post', 'error_451_save_blocking_meta', 10, 2 );
+
+// Create configuration page for wp-admin. Each domain shall configure their REPORTING_URL, API_EMAIL, HOST and results page.
+class errorCode451SettingsPage {
+    /**
+     * Holds the values to be used in the fields callbacks
+     */
+    private $options;
+    /**
+     * Start up
+     */
+    public function __construct() {
+        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
+        add_action( 'admin_init', array( $this, 'page_init' ) );
+    }
+    /**
+     * Add options page
+     */
+    public function add_plugin_page() {
+        // This page will be under "Settings"
+        add_options_page(
+            'Settings Admin',
+            'Error Code 451 Settings',
+            'manage_options',
+            'error-code-451-settings',
+            array( $this, 'create_admin_page' )
+        );
+    }
+    /**
+     * Options page callback
+     */
+    public function create_admin_page() {
+        // Set class property
+        $this->options = get_option( 'error_code_451_option_name' );
+        ?>
+        <div class="wrap">
+            <?php screen_icon(); ?>
+            <h2><?php _e('Settings Error Code 451'); ?></h2>
+            <form method="post" action="options.php">
+            <?php
+                // This prints out all hidden setting fields
+                settings_fields( 'error_code_451_option_group' );
+                do_settings_sections( 'error-code-451-settings' );
+                submit_button();
+            ?>
+            </form>
+        </div>
+        <?php
+    }
+    /**
+     * Register and add settings
+     */
+    public function page_init() {
+        register_setting(
+            'error_code_451_option_group', // Option group
+            'error_code_451_option_name', // Option name
+            array( $this, 'sanitize' ) // Sanitize
+        );
+        add_settings_section(
+            'error_code_451_section_general', // ID
+            'Error Code 451 Settings', // Title
+            array( $this, 'print_section_info' ), // Callback
+            'error-code-451-settings' // Page
+        );
+        add_settings_field(
+            'API_EMAIL',
+            'Censor Email',
+            array( $this, 'api_email_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+        add_settings_field(
+            'REPORTING_URL',
+            'Reporting URL',
+            array( $this, 'api_key_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+        add_settings_field(
+            'HOST',
+            'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
+            array( $this, 'host_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+        add_settings_field(
+            'SSL',
+            'Do you like cake? Have you had cake recently?',
+            array( $this, 'ssl_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+        add_settings_field(
+            'GLOBAL',
+            'Check this box if you REALLY REALLY like cake.',
+            array( $this, 'global_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+
+    }
+    /**
+     * Sanitize each setting field as needed
+     *
+     * @param array $input Contains all settings fields as array keys
+     */
+    public function sanitize( $input ) {
+    if( !empty( $input['REPORTING_URL'] ) )
+        $input['REPORTING_URL'] = sanitize_text_field( $input['REPORTING_URL'] );
+    if( !empty( $input['API_EMAIL'] ) )
+        $input['API_EMAIL'] = sanitize_email( $input['API_EMAIL'] );
+    if( !empty( $input['HOST'] ) )
+        $input['HOST'] = sanitize_text_field( $input['HOST'] );
+
+        return $input;
+    }
+    /**
+     * Print the Section text
+     */
+    public function print_section_info() {
+        print _e('Please fill in the corresponding fields.');
+    }
+    /**
+     * Get the settings option array and print one of its values
+     */
+    public function api_email_callback() {
+        printf(
+            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" required />',
+            esc_attr( $this->options['API_EMAIL'])
+        );
+    }
+    public function api_key_callback() {
+        printf(
+            '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" required />',
+            esc_attr( $this->options['REPORTING_URL'])
+        );
+    }
+    public function host_callback() {
+        printf(
+            '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr" required />',
+            esc_attr( $this->options['HOST'])
+        );
+    }
+    public function ssl_callback() {
+	    $options = get_option('error_code_451_option_name');
+        echo '<input name="error_code_451_option_name[SSL]" id="SSL" type="checkbox" value="1" ' . checked( 1, $options['SSL'], false ) . ' /> yes';
+    }
+    public function global_callback() {
+	    $options = get_option('error_code_451_option_name');
+        echo '<input name="error_code_451_option_name[GLOBAL]" id="GLOBAL" type="checkbox" value="1" ' . checked( 1, $options['GLOBAL'], false ) . ' /> sure';
+    }
+    public function resultspage_status_callback($args) {
+	$locale = $args['locale'];
+	printf(
+	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr" required />',
+	    esc_attr( $this->options["resultspage_$locale"])
+	    );
+    }
+}
+
+if( is_admin() )
+    $error_code_451_settings_page = new errorCode451SettingsPage();
+
 ?>
