@@ -379,13 +379,13 @@ class errorCode451SettingsPage {
             array( $this, 'print_section_info' ), // Callback
             'error-code-451-settings' // Page
         );
-        add_settings_field(
+  /*      add_settings_field(
             'API_EMAIL',
             'Censor Email',
             array( $this, 'api_email_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
-        );
+        );*/
         add_settings_field(
             'REPORTING_URL',
             'Reporting URL',
@@ -393,13 +393,13 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
-        add_settings_field(
+/*        add_settings_field(
             'HOST',
             'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
             array( $this, 'host_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
-        );
+        );*/
         add_settings_field(
             //ClientSideVerification
             'CSV',
@@ -408,13 +408,13 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
-        add_settings_field(
+  /*      add_settings_field(
             'GLOBAL',
             'Check this box if you REALLY REALLY like cake.',
             array( $this, 'global_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
-        );
+        );*/
 
     }
     /**
@@ -443,19 +443,19 @@ class errorCode451SettingsPage {
      */
     public function api_email_callback() {
         printf(
-            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" required />',
+            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
             esc_attr( $this->options['API_EMAIL'])
         );
     }
     public function api_key_callback() {
         printf(
-            '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" required />',
+            '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" />',
             esc_attr( $this->options['REPORTING_URL'])
         );
     }
     public function host_callback() {
         printf(
-            '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr" required />',
+            '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr"  />',
             esc_attr( $this->options['HOST'])
         );
     }
@@ -470,7 +470,7 @@ class errorCode451SettingsPage {
     public function resultspage_status_callback($args) {
 	$locale = $args['locale'];
 	printf(
-	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr" required />',
+	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
 	    esc_attr( $this->options["resultspage_$locale"])
 	    );
     }
