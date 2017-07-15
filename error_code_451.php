@@ -128,6 +128,16 @@ function error_451_add_post_meta_boxes() {
         'side',         // Context
         'default'       // Priority
   );
+
+
+      add_meta_box(
+          'error-451-blocking-page', // Unique ID
+          esc_html__( 'Configure blocking / Error 451', 'error-451' ), // Title
+          'error_451_meta_box',  // Callback function
+          'page',         // Admin page (or post type)
+          'side',         // Context
+          'default'       // Priority
+      );
 }
 
 /* Display the post meta box. */
