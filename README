@@ -21,13 +21,12 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
 
 ## TODO
 
-* what if a page is blocked in two different countries for 2 different reasons?
 * What happens to a post in a loop?
-* test a page vs a post
 * what about custom post formats?
 * improve visual user message.
 * sanitize commaseparated list
 * report to the crawler: should this be done by default? Which information should be public and which obfuscated?
+* what if a page is blocked in two different countries for 2 different reasons?
 
 ## Ideas
 
