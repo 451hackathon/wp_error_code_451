@@ -25,14 +25,14 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
   -> we will only block the single resource.
   -> when in a category or archive, we will simply not display the post.
      -> we will need to modify the loops for this.
-* we need to block/hide posts in RSS, too.
+  -> we need to block/hide posts in RSS, too.
 * report to the crawler: should this be done by default? Which information should be public and which obfuscated?
-* what if a page is blocked in two different countries for 2 different reasons?
+* create a page/xml/sitemap with all blocked resources on the domain -> there is a JSON file
 * what about custom post formats?
 * improve visual user message.
 
 ## Ideas for improvement
 
-* create a page/xml/sitemap will all blocked resources on the domain
-* scheduled block: add an expiry date for the block
 * propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility."
+* scheduled block: add an expiry date for the block
+* what if a page is blocked in two different countries for 2 different reasons?
