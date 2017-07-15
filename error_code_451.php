@@ -175,7 +175,8 @@ function error_451_check_blocked() {
     		if(!empty($blocking_authority)) {
         	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
     		}
-        if(true) {
+        $options = get_option('error_code_451_option_name');
+        if($options['CSV']) {
               $user_error_message .= '<p>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</p>';
         }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
@@ -395,9 +396,10 @@ class errorCode451SettingsPage {
             'error_code_451_section_general'
         );
         add_settings_field(
-            'SSL',
-            'Do you like cake? Have you had cake recently?',
-            array( $this, 'ssl_callback' ),
+            //ClientSideVerification
+            'CSV',
+            'Enable client side verification. (Allow users to self-report over-censorship.)',
+            array( $this, 'CSV_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
         );
@@ -452,9 +454,9 @@ class errorCode451SettingsPage {
             esc_attr( $this->options['HOST'])
         );
     }
-    public function ssl_callback() {
+    public function CSV_callback() {
 	    $options = get_option('error_code_451_option_name');
-        echo '<input name="error_code_451_option_name[SSL]" id="SSL" type="checkbox" value="1" ' . checked( 1, $options['SSL'], false ) . ' /> yes';
+        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
     }
     public function global_callback() {
 	    $options = get_option('error_code_451_option_name');
