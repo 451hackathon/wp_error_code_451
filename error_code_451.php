@@ -141,7 +141,7 @@ function error_451_check_blocked() {
 	// get client Geolocation
     $client_geo_origin = get_client_geocode();
 
-    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin)) {
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin) && $_COOKIE["ignore"] != 1) {
 		//get blocked countries from post metadata
 		$blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
 
@@ -157,14 +157,27 @@ function error_451_check_blocked() {
 
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
-    		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
+    		$user_error_message  = '<html><head>
+                <script>
+                  function setIgnore() {
+                      var date = new Date();
+		                  date.setTime(date.getTime()+(30*24*60*60*1000));
+		                  var expires = ";"+date.toGMTString();
+                      document.cookie = "ignore=1"+expires+"; path=/";
+                      location.reload();
+                  }
+                </script>
+            </head><body><h1>451 Unavailable For Legal Reasons</h1>';
     		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
     		if(!empty($blocking_description)) {
         	    $user_error_message .= '<p>'.$blocking_description.'</p>';
     		}
     		if(!empty($blocking_authority)) {
-        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
     		}
+        if(true) {
+              $user_error_message .= '<p>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</p>';
+        }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
     		exit;
@@ -468,17 +481,14 @@ function report_blocking ($authority, $countries, $description) {
                             date: 2017-07-14T02:26:46.681Z,
                             creator: 'WP Error Code 451 Plugin',
                             version: '0.1',
-                            reporter [opt]: [uuid, generated and persisted by crawler instance],
                             url: 'https://example.org',
                             status: 451,
                             statusText: '".$description."',
                             blockedBy: 'https://451wordpressplugin.com',
                             blockingAuthority: '".$authority."'
                             blockedIn: '".$countries."'
-                            clientIP [opt]: '192.0.2.4',
-                            clientLocation [opt]: {FIXME:locality/state/country?},
-                            originIP [opt]: '192.0.2.207'
                           }";
+
           $ch = curl_init($options['REPORTING_URL']);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
           curl_setopt($ch, CURLOPT_POSTFIELDS, $json_string);
