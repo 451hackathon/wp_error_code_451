@@ -144,9 +144,10 @@ function error_451_meta_box( $post ) {
   wp_nonce_field( basename( __FILE__ ), 'error_451_blocking_nonce' ); ?>
 
   <p>
-    <label for="error_451-blocking"><?php _e( "If you have to enable blocking of this content, please check the box.", 'error_451' ); ?></label>
-    <br />
-    <input class="widefat" type="text" name="error_451_blocking" id="error_451_blocking" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking', true ) ); ?>" size="1" />
+	<?php $error_451_blocking = get_post_meta($post->ID, 'error_451_blocking', true); ?>
+    <label for="error_451_blocking">
+    <input class="checkbox" type="checkbox" name="error_451_blocking" id="error_451_blocking" value="yes" <?php if($error_451_blocking == "yes") { echo ' checked="checked"'; } ?> />
+	<?php _e( "If you have to enable blocking of this content, please check the box.", 'error_451' ); ?></label>
   </p>
 
   <p>
