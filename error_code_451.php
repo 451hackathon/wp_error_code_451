@@ -80,4 +80,104 @@ if($http_response_code == 451) {
 	// get additional header: "blocked-by"
 	// contact the webcrawler
 }
+
+function update_meta_blocking_authority($post_id, $value) {
+	$meta_key = "blocking-authority";
+	$meta_value = $value;
+	update_post_meta( $post_id, $meta_key, $meta_value);
+}
+
+/* Meta box setup function. */
+function error_451_post_meta_boxes_setup() {
+    /* Add meta boxes on the 'add_meta_boxes' hook. */
+    add_action( 'add_meta_boxes', 'error_451_add_post_meta_boxes' );
+
+    /* Save post meta on the 'save_post' hook. */
+    add_action( 'save_post', 'error_451_save_blocking_meta', 10, 2 );
+}
+
+/* Create meta box to be displayed on the post editor screen. */
+function error_451_add_post_meta_boxes() {
+    add_meta_box(
+        'error-451-blocking', // Unique ID
+        esc_html__( 'Configure blocking / Error 451', 'error-451' ), // Title
+        'error_451_meta_box',  // Callback function
+        'post',         // Admin page (or post type)
+        'side',         // Context
+        'default'       // Priority
+  );
+}
+
+/* Display the post meta box. */
+function error_451_meta_box( $post ) {
+  wp_nonce_field( basename( __FILE__ ), 'error_451_blocking_nonce' ); ?>
+
+  <p>
+    <label for="error_451-blocking"><?php _e( "If you have to enable blocking of this content, please check the box.", 'error_451' ); ?></label>
+    <br />
+    <input class="widefat" type="text" name="error_451_blocking" id="error_451_blocking" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking', true ) ); ?>" size="1" />
+  </p>
+
+  <p>
+    <label for="error_451-blocking_countries"><?php _e( "Add comma-separated list of country codes where this page shall be blocked. When left empty, the content shall be blocked from all locations.", 'error_451' ); ?></label>
+    <br />
+    <input class="widefat" type="text" name="error_451_blocking_countries" id="error_451_blocking_countries" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking_countries', true ) ); ?>" size="30" />
+  </p>
+
+  <p>
+    <label for="error_451_blocking_authority"><?php _e( "Please specify the URL of the authority has requested the block.", 'error_451' ); ?></label>
+    <br />
+    <input class="widefat" type="url" name="error_451_blocking_authority" id="error_451_blocking_authority" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking_authority', true ) ); ?>" size="256" />
+  </p>
+<?php }
+
+/* Save the meta box's post metadata. */
+function error_451_save_blocking_meta( $post_id, $post ) {
+
+  /* Verify the nonce before proceeding. */
+  if ( !isset( $_POST['error_451_blocking_nonce'] ) || !wp_verify_nonce( $_POST['error_451_blocking_nonce'], basename( __FILE__ ) ) )
+    return $post_id;
+
+  /* Get the post type object. */
+  $post_type = get_post_type_object( $post->post_type );
+
+  /* Check if the current user has permission to edit the post. */
+  if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+    return $post_id;
+
+  // which meta keys do we want to update?
+  $meta_keys = array('error_451_blocking', 'error_451_blocking_countries', 'error_451_blocking_authority');
+
+  /* Get the posted data and sanitize it. */
+
+  foreach($meta_keys as $meta_key) {
+    $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+
+    /* Get the meta value of the custom field key. */
+	$meta_value = get_post_meta( $post_id, $meta_key, true );
+
+	/* If a new meta value was added and there was no previous value, add it. */
+	if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
+		add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
+	}
+
+	/* If the new meta value does not match the old value, update it. */
+	elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
+		update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
+	}
+
+	/* If there is no new meta value but an old value exists, delete it. */
+	elseif ( '' == $new_meta_value[$meta_key] && $meta_value ) {
+		delete_post_meta( $post_id, $meta_key, $meta_value );
+	}
+
+  }
+}
+
+/* Fire meta box setup function on the post editor screen. */
+add_action( 'load-post.php', 'error_451_post_meta_boxes_setup' );
+add_action( 'load-post-new.php', 'error_451_post_meta_boxes_setup' );
+
+/* Save post meta on the 'save_post' hook. */
+add_action( 'save_post', 'error_451_save_blocking', 10, 2 );
 ?>
