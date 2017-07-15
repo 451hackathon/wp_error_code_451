@@ -38,16 +38,16 @@ add_action('plugins_loaded', 'error_code_451_init');
 
 /* get user IP */
 function get_the_user_ip() {
-if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-//check ip from share internet
-$ip = $_SERVER['HTTP_CLIENT_IP'];
-} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-//to check ip is pass from proxy
-$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-} else {
-$ip = $_SERVER['REMOTE_ADDR'];
-}
-return apply_filters( 'wpb_get_ip', $ip );
+    if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
+        // check ip from share internet
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+        // to check ip is pass from proxy
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'];
+    }
+    return apply_filters( 'wpb_get_ip', $ip );
 }
 
 // make it possible for a site admin to block a URL
