@@ -30,9 +30,9 @@ Domain Path: /languages/
 /* Plugin l10n */
 function error_code_451_init() {
     $plugin_dir = basename(dirname(__FILE__));
-    load_plugin_textdomain( 'error_code_451', false, "$plugin_dir/languages" );
+    load_plugin_textdomain( 'error_451', false, "$plugin_dir/languages" );
 }
-add_action('plugins_loaded', 'error_code_451_init');
+add_action('plugins_loaded', 'error_451_init');
 
 // make it possible for a site admin to block a URL
 // - based on geocodes
