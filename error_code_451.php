@@ -211,5 +211,5 @@ add_action( 'load-post.php', 'error_451_post_meta_boxes_setup' );
 add_action( 'load-post-new.php', 'error_451_post_meta_boxes_setup' );
 
 /* Save post meta on the 'save_post' hook. */
-add_action( 'save_post', 'error_451_save_blocking', 10, 2 );
+add_action( 'save_post', 'error_451_save_blocking_meta', 10, 2 );
 ?>
