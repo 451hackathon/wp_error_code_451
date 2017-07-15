@@ -35,7 +35,6 @@ function error_code_451_init() {
 }
 add_action('plugins_loaded', 'error_code_451_init');
 
-
 /* get user IP */
 function get_the_user_ip() {
     if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
@@ -50,37 +49,6 @@ function get_the_user_ip() {
     return apply_filters( 'wpb_get_ip', $ip );
 }
 
-// - based on geocodes
-// - make it possible to send blocked-by header
-// Admin page with URLs to block (list and checkboxes)
-// or field in post editor with checkbox / we could use post_meta for this.
-// make it possible to allow the admin to report the block to the webcrawler
-
-/*
-// https://tools.ietf.org/html/rfc7725
- When an entity blocks access to a resource and returns status 451, it
- SHOULD include a "Link" HTTP header field [RFC5988] whose value is a
- URI reference [RFC3986] identifying itself.  When used for this
- purpose, the "Link" header field MUST have a "rel" parameter whose
- value is "blocked-by".
-
- - Would be the website itself = the implementor
- - extra field blocking-authority = specify the entity that requested the blocking
-
- -> post_meta fields which we need to create
- 1 = blocked boolean,
- 2 = blocking-authority (URI)
- 3 = Geocode field (comma separated list of country codes)
- additional header: blocked-by (automatically attributed URI)
-
- // Post-PoC : what if a page is blocked in two different countries for 2 different reasons?
-*/
-
-/*
-What would the user see?
--> would get served a page telling them "Error 451 - unavailable for legal reasons"
--> should also say "by $blocking_authority"
-*/
 function get_client_geocode() {
       // Get visitor geo origin
       $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
