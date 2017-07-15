@@ -124,9 +124,13 @@ function error_451_check_blocked() {
 		$site_url = site_url();
 		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
 		$http_response_code = http_response_code($error_code);
-		header("HTTP/1.0 451 Unavailable For Legal Reasons", false);
-		header("blocked-by: $site_url", true, $error_code);
-		header("blocking-authority: $blocking_authority", true, $error_code);
+		status_header(451, "Unavailable For Legal Reasons");
+		header("HTTP/1.1 451 Unavailable For Legal Reasons", false);
+		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
+		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
+		wp_redirect("http://makechange.earth/451", 451);
+		echo "lol 451";
+		exit;
     }
 }
 
