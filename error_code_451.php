@@ -63,6 +63,13 @@ function get_client_geocode() {
       return $geo_ip->country_code;
 }
 
+// Sanitize IDs, may contain letters, numbers, dots and commas.
+function sanitize_comma_separated($input) {
+    $input = preg_replace("/[^a-zA-Z0-9\.\,\:]+/", "", $input);
+	$input = str_replace(array('\r', '\n', '%0a', '%0d' ), '', trim($input));
+    return $input;
+}
+
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
 	// Get access to the current WordPress object instance
@@ -72,13 +79,14 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
+	// get client Geolocation
     $client_geo_origin = get_client_geocode();
 
-    //get blocked countries from post metadata
-    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin)) {
+		//get blocked countries from post metadata
+		$blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
 
-    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
-        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
+        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
             $error_code = 451;
     		$site_url = site_url();
     		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
@@ -126,10 +134,9 @@ function error_451_add_post_meta_boxes() {
         'post',         // Admin page (or post type)
         'side',         // Context
         'default'       // Priority
-  );
+    );
 
-
-      add_meta_box(
+     add_meta_box(
           'error-451-blocking-page', // Unique ID
           esc_html__( 'Configure blocking / Error 451', 'error-451' ), // Title
           'error_451_meta_box',  // Callback function
@@ -188,7 +195,11 @@ function error_451_save_blocking_meta( $post_id, $post ) {
 
     /* Get the posted data and sanitize it. */
     foreach($meta_keys as $meta_key) {
-        $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+		if($meta_key == 'error_451_blocking_countries') {
+            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_comma_separated( $_POST[$meta_key] ) : '' );
+		} else {
+            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+		}
 
         /* Get the meta value of the custom field key. */
         $meta_value = get_post_meta( $post_id, $meta_key, true );
