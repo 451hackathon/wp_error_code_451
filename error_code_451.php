@@ -90,47 +90,48 @@ if($http_response_code == 451) {
 
 /*
 What would the user see?
--> would get served a page telling them "Error 451 - blocked for legal reasons"
+-> would get served a page telling them "Error 451 - unavailable for legal reasons"
 -> should also say "by $blocking_authority"
 */
 
-// FIXME: implement geoblocking
+// Serve 451 http_response_code and send additional headers
+function error_451_check_blocked() {
+	// Get access to the current WordPress object instance
+	// Get the base URL & post ID
+	global $wp;
+	$current_url = home_url(add_query_arg(array(),$wp->request));
+	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
+	$post_id = url_to_postid($current_url);
 
-function error_451_check_blocked () {
-  global $post;
+    // Get visitor geo origin
+    $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
+    $options = array(
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
+    );
+    $ch = curl_init( $json_url );
+    curl_setopt_array( $ch, $options );
+    $ch_result = curl_exec($ch);
+    $geo_ip = json_decode($ch_result);
+    $client_geo_origin = $geo_ip->country_code;
+	//echo $client_geo_origin;
 
-  //get visitor geo origin
-  $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
-  $options = array(
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
-  );
-  $ch = curl_init( $json_url );
-  curl_setopt_array( $ch, $options );
-  $ch_result = curl_exec($ch);
-  $geo_ip = json_decode($ch_result);
-  $client_geo_origin = $geo_ip->country_code;
+    //get blocked countries from post metadata
+    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
 
-  //get blocked countries from post metadata
-  $blocked_countries = explode(',', get_post_meta( $post->id, 'error_451_blocking_countries', true));
-  
-  if( in_array($client_geo_origin, $blocked_countries)) {
-  	// - serve 451 http_response_code
-  	$http_response_code = http_response_code(451);
-    echo "YAAAAS";
-  	// send additional header: "blocked-by"
-  }
-
+    if( in_array($client_geo_origin, $blocked_countries)) {
+		$error_code = 451;
+		$site_url = site_url();
+		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+		$http_response_code = http_response_code($error_code);
+		header("HTTP/1.0 451 Unavailable For Legal Reasons", false);
+		header("blocked-by: $site_url", true, $error_code);
+		header("blocking-authority: $blocking_authority", true, $error_code);
+    }
 }
 
-
-
-// This will get the HTTP response code of the current page.
-$http_response_code = http_response_code();
-if($http_response_code == 451) {
-	// get additional header: "blocked-by"
-	// contact the webcrawler
-}
+/* Check for blocked content on page load */
+add_action( 'init', 'error_451_check_blocked');
 
 /* Meta box setup function. */
 function error_451_post_meta_boxes_setup() {
@@ -226,7 +227,4 @@ add_action( 'load-post-new.php', 'error_451_post_meta_boxes_setup' );
 
 /* Save post meta on the 'save_post' hook. */
 add_action( 'save_post', 'error_451_save_blocking_meta', 10, 2 );
-
-/*check for blocked content */
-add_action( 'init', 'error_451_check_blocked')
 ?>
