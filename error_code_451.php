@@ -33,7 +33,7 @@ function error_code_451_init() {
     $plugin_dir = basename(dirname(__FILE__));
     load_plugin_textdomain( 'error_451', false, "$plugin_dir/languages" );
 }
-add_action('plugins_loaded', 'error_451_init');
+add_action('plugins_loaded', 'error_code_451_init');
 
 
 /* get user IP */
@@ -54,17 +54,7 @@ return apply_filters( 'wpb_get_ip', $ip );
 // - serve 451 http_response_code
 // send HTTP response CODE
 // FIXME: implement geoblocking
-$json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
-$options = array(
-CURLOPT_RETURNTRANSFER => true,
-CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
-);
-$ch = curl_init( $json_url );
-curl_setopt_array( $ch, $options );
-$ch_result = curl_exec($ch);
-$geo_ip = json_decode($ch_result);
 
-//echo $geo_ip->country_code;
 
 $http_response_code = http_response_code();
 if($http_response_code == 451) {
@@ -105,11 +95,35 @@ What would the user see?
 */
 
 // FIXME: implement geoblocking
-if($client_geo_origin == "SOMETHING") {
-	// - serve 451 http_response_code
-	$http_response_code = http_response_code(451);
-	// send additional header: "blocked-by"
+
+function error_451_check_blocked () {
+  global $post;
+
+  //get visitor geo origin
+  $json_url = 'http://freegeoip.net/json/' . get_the_user_ip();
+  $options = array(
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => array('Content-type: application/json') ,
+  );
+  $ch = curl_init( $json_url );
+  curl_setopt_array( $ch, $options );
+  $ch_result = curl_exec($ch);
+  $geo_ip = json_decode($ch_result);
+  $client_geo_origin = $geo_ip->country_code;
+
+  //get blocked countries from post metadata
+  $blocked_countries = explode(',', get_post_meta( $post->id, 'error_451_blocking_countries', true));
+  
+  if( in_array($client_geo_origin, $blocked_countries)) {
+  	// - serve 451 http_response_code
+  	$http_response_code = http_response_code(451);
+    echo "YAAAAS";
+  	// send additional header: "blocked-by"
+  }
+
 }
+
+
 
 // This will get the HTTP response code of the current page.
 $http_response_code = http_response_code();
@@ -212,4 +226,7 @@ add_action( 'load-post-new.php', 'error_451_post_meta_boxes_setup' );
 
 /* Save post meta on the 'save_post' hook. */
 add_action( 'save_post', 'error_451_save_blocking_meta', 10, 2 );
+
+/*check for blocked content */
+add_action( 'init', 'error_451_check_blocked')
 ?>
