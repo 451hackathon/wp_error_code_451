@@ -1,1 +1,3 @@
-Wordpress plugin for Error Code 451
+# Wordpress plugin for Error Code 451
+
+This plugin aims at making it easier for Wordpress site administrators to mark pages or posts as being censored when they get asked by a legal entity to do so. So, instead of simply taking down the content, they will be able to mark it as censored and inform users about this very fact by adding the URL of the entity who ordered the takedown, as well as an optional description.
