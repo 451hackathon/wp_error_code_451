@@ -123,6 +123,7 @@ function error_451_check_blocked() {
 		$error_code = 451;
 		$site_url = site_url();
 		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
 		// send additional headers
 		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
@@ -131,10 +132,13 @@ function error_451_check_blocked() {
 		// redirect to get the correct HTTP status code for this page.
 		wp_redirect("/451", 451);
 		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
-		if(!empty($blocking_authority)) {
-    	    $user_error_message .= '<p>This content has been blocked by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+		if(!empty($blocking_description)) {
+    	    $user_error_message .= '<p>'.$blocking_description.'</p>';
 		}
-		$user_error_message .= '<p> This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+		if(!empty($blocking_authority)) {
+    	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+		}
 		$user_error_message .= '</body></html>';
 		echo $user_error_message;
 		exit;
@@ -187,6 +191,12 @@ function error_451_meta_box( $post ) {
     <br />
     <input class="widefat" type="url" name="error_451_blocking_authority" id="error_451_blocking_authority" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking_authority', true ) ); ?>" size="256" />
   </p>
+
+  <p>
+    <label for="error_451_blocking_description"><?php _e( "You may optionally specify a description so that visitors know why the page is blocked.", 'error_451' ); ?></label>
+	<br />
+    <input class="widefat" type="text" name="error_451_blocking_description" id="error_451_blocking_description" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking_description', true ) ); ?>" size="256" />
+  </p>
 <?php }
 
 /* Save the meta box's post metadata. */
@@ -204,7 +214,7 @@ function error_451_save_blocking_meta( $post_id, $post ) {
     return $post_id;
 
   // which meta keys do we want to update?
-  $meta_keys = array('error_451_blocking', 'error_451_blocking_countries', 'error_451_blocking_authority');
+  $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
 
   /* Get the posted data and sanitize it. */
 
