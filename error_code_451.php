@@ -122,10 +122,10 @@ function error_451_check_partial_blocked_content($query) {
 	global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
 	if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
-		// this would remove the posts entirely from the loop.
 		foreach($blocked_content_ids as $blocked_content) {
-			$post_ids = $blocked_content['post_id'];
+			$post_ids[] = $blocked_content->post_id;
 		}
+		// this would remove the posts entirely from the loop.
 	    $query->set('post__not_in', $post_ids);
 		// instead, we want to modify their title and content, but only in the areas where they are blocked!
 	}
