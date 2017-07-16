@@ -8,6 +8,14 @@ On a single page, the user gets served a page telling them "Error 451 - unavaila
 
 What happens to a post in a loop? When in a category or archive, we will display altered post content und post title, so that censorship becomes visible.
 
+## Report blocking to a crawler
+
+It's  possible to configure blocking to to a crawler by filling in the option in the backend.
+
+## Allow users to ignore the block at their own risk.
+
+Site admins can check a box which will allow visitors to see blocked content anyway, at their own risk.
+
 ## RFC
 
 https://tools.ietf.org/html/rfc7725
@@ -23,9 +31,6 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
 
 ## TODO
 * Modify the Readme format to match Wordpress' requirements
-* report to the crawler:
-  - Which information should be public and which obfuscated?
-  - Tell the user what information they are sending and advertise them that this might be problematic in some jurisdictions to report.
 * Make it possible to have the JSON filename as an option in the backend
 * better verify if the plugin directory is writable for the JSON file to be written there.
 
