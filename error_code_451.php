@@ -206,8 +206,6 @@ function error_451_check_blocked() {
             $error_code = 451;
     		$site_url = site_url();
    			$script_url = plugins_url('', __FILE__).'/js/error_451.js';
-    		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
-    		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
     		// send additional headers
     		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
@@ -216,23 +214,32 @@ function error_451_check_blocked() {
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
     		$user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
-            </head><body><h1>451 Unavailable For Legal Reasons</h1>';
-    		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
-    		if(!empty($blocking_description)) {
-        	    $user_error_message .= '<p>'.$blocking_description.'</p>';
-    		}
-    		if(!empty($blocking_authority)) {
-        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
-    		}
-        $options = get_option('error_code_451_option_name');
-        if($options['CSV']) {
-              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setError451Ignore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
-        }
-    		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
-    		echo $user_error_message;
+                                    </head><body><h1>451 Unavailable For Legal Reasons</h1>';
+    		$user_error_message .= user_error_message($post_id);
+			$user_error_message .= '</body></html>';
+			echo $user_error_message;
     		exit;
         }
     }
+}
+
+function user_error_message($post_id) {
+    $options = get_option('error_code_451_option_name');
+	$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+	$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
+	$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+	if(!empty($blocking_description)) {
+		$user_error_message .= '<p>'.$blocking_description.'</p>';
+	}
+	if(!empty($blocking_authority)) {
+		$user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
+	}
+    if($options['CSV']) {
+          $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setError451Ignore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
+    }
+    $user_error_message .= '<p>'.__('On an unrelated note,', 'error_451').' <a href="https://gettor.torproject.org/">Get Tor.</a></p>';
+	$user_error_message .= '</body></html>';
+    return $user_error_message;
 }
 
 // call javascript
