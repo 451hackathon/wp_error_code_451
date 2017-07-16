@@ -144,7 +144,7 @@ function alter_censored_content( $content ) {
 	    // FIXME: verify blocked countries here
 	}
     if ( $post && in_array( $post->ID, $post_ids, true ) ) {
-        $content = "This content has been blocked" ;
+        $content = user_error_message($post->ID);
     }
 
     return $content;
@@ -152,8 +152,8 @@ function alter_censored_content( $content ) {
 
 // add the filter when main loop starts
 add_action( 'loop_start', function( WP_Query $query ) {
-    if ( $query->is_main_query() ) {
-    //if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
+    //if ( $query->is_main_query() ) {
+    if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
        add_filter( 'the_title', 'alter_censored_title', -10 );
        add_filter( 'the_content', 'alter_censored_content', -10 );
    }
