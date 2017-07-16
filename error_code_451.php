@@ -33,7 +33,7 @@ $cfg['plugin_version'] = "0.1";
 
 /* Plugin l10n */
 function error_code_451_init() {
-    $plugin_dir = basename(dirname(__FILE__));
+   	$plugin_dir = plugins_url('', __FILE__);
     load_plugin_textdomain( 'error_451', false, "$plugin_dir/languages" );
 }
 add_action('plugins_loaded', 'error_code_451_init');
@@ -205,6 +205,7 @@ function error_451_check_blocked() {
         if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
             $error_code = 451;
     		$site_url = site_url();
+   			$script_url = plugins_url('', __FILE__).'/js/error_451.js';
     		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
     		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
@@ -214,16 +215,7 @@ function error_451_check_blocked() {
 
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
-    		$user_error_message  = '<html><head>
-                <script type="text/javascript">
-                  function setIgnore() {
-                      var date = new Date();
-		                  date.setTime(date.getTime()+(30*24*60*60*1000));
-		                  var expires = ";"+date.toGMTString();
-                      document.cookie = "ignore=1"+expires+"; path=/";
-                      location.reload();
-                  }
-                </script>
+    		$user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
             </head><body><h1>451 Unavailable For Legal Reasons</h1>';
     		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
     		if(!empty($blocking_description)) {
@@ -234,7 +226,7 @@ function error_451_check_blocked() {
     		}
         $options = get_option('error_code_451_option_name');
         if($options['CSV']) {
-              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
+              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setError451Ignore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
         }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
@@ -242,6 +234,13 @@ function error_451_check_blocked() {
         }
     }
 }
+
+// call javascript
+function error_451_scripts() {
+   wp_register_script( 'blocked', plugins_url('', __FILE__).'/js/error_451.js', 0, 0, true );
+   wp_enqueue_script( 'blocked' );
+}
+add_action( 'wp_enqueue_scripts', 'error_451_scripts' );
 
 /* Check for blocked content on page load */
 add_action( 'init', 'error_451_check_blocked');
