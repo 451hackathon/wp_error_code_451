@@ -238,7 +238,6 @@ function user_error_message($post_id) {
           $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setError451Ignore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
     }
     $user_error_message .= '<p>'.__('On an unrelated note,', 'error_451').' <a href="https://gettor.torproject.org/">Get Tor.</a></p>';
-	$user_error_message .= '</body></html>';
     return $user_error_message;
 }
 
