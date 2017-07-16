@@ -33,7 +33,7 @@ $cfg['plugin_version'] = "0.1";
 
 /* Plugin l10n */
 function error_code_451_init() {
-   	$plugin_dir = plugins_url('', __FILE__);
+       $plugin_dir = plugins_url('', __FILE__);
     load_plugin_textdomain( 'error_451', false, "$plugin_dir/languages" );
 }
 add_action('plugins_loaded', 'error_code_451_init');
@@ -70,7 +70,7 @@ function get_client_geocode() {
 // Sanitize IDs, may contain letters, numbers, dots and commas.
 function sanitize_comma_separated($input) {
     $input = preg_replace("/[^a-zA-Z0-9\.\,\:]+/", "", $input);
-	$input = str_replace(array('\r', '\n', '%0a', '%0d' ), '', trim($input));
+    $input = str_replace(array('\r', '\n', '%0a', '%0d' ), '', trim($input));
     return $input;
 }
 
@@ -86,33 +86,33 @@ function write_json($data, $filename) {
 /* read arraay from JSON */
 function read_json($filename) {
     $plugin_dir = realpath(dirname(__FILE__));
-	if(file_exists("$plugin_dir/$filename")) {
-		$data = json_decode(file_get_contents("$plugin_dir/$filename"));
-		return $data;
-	}
+    if(file_exists("$plugin_dir/$filename")) {
+        $data = json_decode(file_get_contents("$plugin_dir/$filename"));
+        return $data;
+    }
 }
 
 // this will be useful for having a sitemap of blocked files as well as for the loops and RSS loop.
 function find_blocked_content_ids() {
-	global $cfg;
-	$i = 0;
-	// we want to create an array of all blocked content
-	$blocked_content_args = array(
-		'meta_query' => array(
-			array(
-				'key' => 'error_451_blocking',
-				'value' => 'yes'
-			)
-		)
-	);
-	$blocked_content_query = new WP_Query( $blocked_content_args );
+    global $cfg;
+    $i = 0;
+    // we want to create an array of all blocked content
+    $blocked_content_args = array(
+        'meta_query' => array(
+            array(
+                'key' => 'error_451_blocking',
+                'value' => 'yes'
+            )
+        )
+    );
+    $blocked_content_query = new WP_Query( $blocked_content_args );
     foreach ($blocked_content_query->posts as $post) {
-		$blocked_content_ids[$i]['post_id'] = $post->ID;
-		$blocked_content_ids[$i]['blocked_countries'] = get_post_meta( $post->ID, 'error_451_blocking_countries', true);
-		$i++;
+        $blocked_content_ids[$i]['post_id'] = $post->ID;
+        $blocked_content_ids[$i]['blocked_countries'] = get_post_meta( $post->ID, 'error_451_blocking_countries', true);
+        $i++;
     }
     if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
-		echo "Write of JSON file failed.";
+        echo "Write of JSON file failed.";
     }
 }
 
@@ -124,7 +124,7 @@ add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 function alter_censored_title( $title ) {
     global $post;
     if($post AND compare_post_with_location($post->ID)) {
-		$title = __("Error 451 - Unavailable For Legal Reasons.", 'error_451') ;
+        $title = __("Error 451 - Unavailable For Legal Reasons.", 'error_451') ;
     }
     return $title;
 }
@@ -139,21 +139,21 @@ function alter_censored_content( $content ) {
 }
 
 function compare_post_with_location($post_id) {
-	global $cfg;
+    global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
-	foreach($blocked_content_ids as $blocked_content) {
-		$post_ids[] = $blocked_content->post_id;
-	}
-    if(in_array( $post_id, $post_ids, true ) AND error_451_check_client_location_against_block($post_id)) {
-		return true;
+    foreach($blocked_content_ids as $blocked_content) {
+        $post_ids[] = $blocked_content->post_id;
     }
-	return false;
+    if(in_array( $post_id, $post_ids, true ) AND error_451_check_client_location_against_block($post_id)) {
+        return true;
+    }
+    return false;
 }
 
 // hide the blocked post thumbnail.
 function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr) {
-	$html = "";
-	return $html;
+    $html = "";
+    return $html;
 }
 
 // add the filter when main loop starts
@@ -182,14 +182,14 @@ add_action( 'loop_end', function( WP_Query $query ) {
 /*
 // alter the query to not display these posts.
 function error_451_check_partial_blocked_content($query) {
-	global $cfg;
+    global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
-	if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
-		foreach($blocked_content_ids as $blocked_content) {
-			$post_ids[] = $blocked_content->post_id;
-		}
-	    $query->set('post__not_in', $post_ids);
-	}
+    if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
+        foreach($blocked_content_ids as $blocked_content) {
+            $post_ids[] = $blocked_content->post_id;
+        }
+        $query->set('post__not_in', $post_ids);
+    }
 }
 
 // Check for blocked content on page load
@@ -197,62 +197,62 @@ add_action( 'pre_get_posts', 'error_451_check_partial_blocked_content');
 */
 
 function error_451_check_client_location_against_block($post_id) {
-	// get client Geolocation
+    // get client Geolocation
     $client_geo_origin = get_client_geocode();
 
-	// check post
+    // check post
     if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin) && $_COOKIE["ignore"] != 1) {
-		//get blocked countries from post metadata
-		$blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
+        //get blocked countries from post metadata
+        $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
         if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
-			return true;
-		}
-	}
-	return false;
+            return true;
+        }
+    }
+    return false;
 }
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
-	// Get access to the current WordPress object instance
-	// Get the base URL & post ID
-	global $wp;
-	$current_url = home_url(add_query_arg(array(),$wp->request));
-	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
-	$post_id = url_to_postid($current_url);
+    // Get access to the current WordPress object instance
+    // Get the base URL & post ID
+    global $wp;
+    $current_url = home_url(add_query_arg(array(),$wp->request));
+    $current_url = $current_url . $_SERVER['REDIRECT_URL'];
+    $post_id = url_to_postid($current_url);
 
     if(error_451_check_client_location_against_block($post_id)) {
-		$error_code = 451;
-		$site_url = site_url();
-		$script_url = plugins_url('', __FILE__).'/js/error_451.js';
-		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+        $error_code = 451;
+        $site_url = site_url();
+        $script_url = plugins_url('', __FILE__).'/js/error_451.js';
+        $blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
 
-		// send additional headers
-		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
-		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
+        // send additional headers
+        header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
+        header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
 
-		// redirect to get the correct HTTP status code for this page.
-		wp_redirect("/451", 451);
-		$user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
-								</head><body><h1>'.__('451 Unavailable For Legal Reasons', 'error_451').'</h1>';
-		$user_error_message .= user_error_message($post_id);
-		$user_error_message .= '</body></html>';
-		echo $user_error_message;
-		exit;
+        // redirect to get the correct HTTP status code for this page.
+        wp_redirect("/451", 451);
+        $user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
+                                </head><body><h1>'.__('451 Unavailable For Legal Reasons', 'error_451').'</h1>';
+        $user_error_message .= user_error_message($post_id);
+        $user_error_message .= '</body></html>';
+        echo $user_error_message;
+        exit;
     }
 }
 
 function user_error_message($post_id) {
     $options = get_option('error_code_451_option_name');
-	$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
-	$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
+    $blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
+    $blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
-	$user_error_message .= '<p>'.__('This status code indicates that the server is denying access to the resource as a consequence of a legal demand.', 'error_451').'</p>';
-	if(!empty($blocking_authority)) {
-		$user_error_message .= '<p>'.__('The blocking of this content has been requested by', 'error_451').' <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
-	}
-	if(!empty($blocking_description)) {
-		$user_error_message .= '<p>'.$blocking_description.'</p>';
-	}
+    $user_error_message .= '<p>'.__('This status code indicates that the server is denying access to the resource as a consequence of a legal demand.', 'error_451').'</p>';
+    if(!empty($blocking_authority)) {
+        $user_error_message .= '<p>'.__('The blocking of this content has been requested by', 'error_451').' <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
+    }
+    if(!empty($blocking_description)) {
+        $user_error_message .= '<p>'.$blocking_description.'</p>';
+    }
     if($options['CSV']) {
           $user_error_message .= '<p><a href="#" onclick="setError451Ignore()">'.__('If you believe this message is an error and that you are legally entitled to access the content, click here.', 'error_451').'</a> '.__('Note: This will set a cookie on your device that will expire in 1 hour.', 'error_451').'</p>';
     }
@@ -305,10 +305,10 @@ function error_451_meta_box( $post ) {
   wp_nonce_field( basename( __FILE__ ), 'error_451_blocking_nonce' ); ?>
 
   <p>
-	<?php $error_451_blocking = get_post_meta($post->ID, 'error_451_blocking', true); ?>
+    <?php $error_451_blocking = get_post_meta($post->ID, 'error_451_blocking', true); ?>
     <label for="error_451_blocking">
     <input class="checkbox" type="checkbox" name="error_451_blocking" id="error_451_blocking" value="yes" <?php if($error_451_blocking == "yes") { echo ' checked="checked"'; } ?> />
-	<?php _e( "If you have to enable blocking of this content, please check the box.", 'error_451' ); ?></label>
+    <?php _e( "If you have to enable blocking of this content, please check the box.", 'error_451' ); ?></label>
   </p>
 
   <p>
@@ -325,7 +325,7 @@ function error_451_meta_box( $post ) {
 
   <p>
     <label for="error_451_blocking_description"><?php _e( "You may optionally specify a description so that visitors know why the page is blocked.", 'error_451' ); ?></label>
-	<br />
+    <br />
     <input class="widefat" type="text" name="error_451_blocking_description" id="error_451_blocking_description" value="<?php echo esc_attr( get_post_meta( $post->ID, 'error_451_blocking_description', true ) ); ?>" size="256" />
   </p>
 <?php }
@@ -350,29 +350,29 @@ function error_451_save_blocking_meta( $post_id, $post ) {
 
     /* Get the posted data and sanitize it. */
     foreach($meta_keys as $meta_key) {
-		if($meta_key == 'error_451_blocking_countries') {
+        if($meta_key == 'error_451_blocking_countries') {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_comma_separated( $_POST[$meta_key] ) : '' );
-		} else {
+        } else {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
-		}
+        }
 
         /* Get the meta value of the custom field key. */
         $meta_value = get_post_meta( $post_id, $meta_key, true );
 
         /* If a new meta value was added and there was no previous value, add it. */
-	    if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
-		    add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
+        if ( $new_meta_value[$meta_key] && '' == $meta_value ) {
+            add_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key], true );
         }
 
-	    /* If the new meta value does not match the old value, update it. */
-	    elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
-		    update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
-	}
+        /* If the new meta value does not match the old value, update it. */
+        elseif ( $new_meta_value[$meta_key] && $new_meta_value[$meta_key] != $meta_value ) {
+            update_post_meta( $post_id, $meta_key, $new_meta_value[$meta_key] );
+    }
 
-	/* If there is no new meta value but an old value exists, delete it. */
-	elseif ( '' == $new_meta_value[$meta_key] && $meta_value ) {
-		delete_post_meta( $post_id, $meta_key, $meta_value );
-	}
+    /* If there is no new meta value but an old value exists, delete it. */
+    elseif ( '' == $new_meta_value[$meta_key] && $meta_value ) {
+        delete_post_meta( $post_id, $meta_key, $meta_value );
+    }
 
     }
 }
@@ -522,7 +522,7 @@ class errorCode451SettingsPage {
     }
 
     public function CSV_callback() {
-	    $options = get_option('error_code_451_option_name');
+        $options = get_option('error_code_451_option_name');
         echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
     }
 
@@ -544,15 +544,15 @@ class errorCode451SettingsPage {
     }  }
 
     public function global_callback() {
-	    $options = get_option('error_code_451_option_name');
+        $options = get_option('error_code_451_option_name');
         echo '<input name="error_code_451_option_name[GLOBAL]" id="GLOBAL" type="checkbox" value="1" ' . checked( 1, $options['GLOBAL'], false ) . ' /> sure';
     }
     public function resultspage_status_callback($args) {
-	$locale = $args['locale'];
-	printf(
-	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
-	    esc_attr( $this->options["resultspage_$locale"])
-	    );
+    $locale = $args['locale'];
+    printf(
+        '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
+        esc_attr( $this->options["resultspage_$locale"])
+        );
     }  */
 }
 
