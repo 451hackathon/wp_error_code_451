@@ -77,10 +77,14 @@ function sanitize_comma_separated($input) {
 /* writes array data to JSON */
 function write_json($data, $filename) {
     $plugin_dir = realpath(dirname(__FILE__));
-    $handler = fopen("$plugin_dir/$filename", "w+");
-    fwrite($handler, json_encode($data));
-    fclose($handler);
-    return true;
+	if (is_writable($plugin_dir/$filename)) {
+		$handler = fopen("$plugin_dir/$filename", "w+");
+		fwrite($handler, json_encode($data));
+		fclose($handler);
+		return true;
+	} else {
+		 return new WP_Error('broke', __('The JSON file containing post ids which are blocked cannot be written. Please make sure that the plugin directory is writable by the webserver.', 'error_451'));
+	}
 }
 
 /* read arraay from JSON */
@@ -111,9 +115,7 @@ function find_blocked_content_ids() {
         $blocked_content_ids[$i]['blocked_countries'] = get_post_meta( $post->ID, 'error_451_blocking_countries', true);
         $i++;
     }
-    if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
-        echo "Write of JSON file failed.";
-    }
+    write_json($blocked_content_ids, $cfg['json_filename']);
 }
 
 // save all blocked content to JSON file when updating a post.
@@ -138,6 +140,15 @@ function alter_censored_content( $content ) {
     return $content;
 }
 
+// hide the blocked post thumbnail.
+function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr) {
+    global $post;
+    if($post AND compare_post_with_location($post->ID)) {
+		$html = "";
+	}
+    return $html;
+}
+
 function compare_post_with_location($post_id) {
     global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
@@ -148,15 +159,6 @@ function compare_post_with_location($post_id) {
         return true;
     }
     return false;
-}
-
-// hide the blocked post thumbnail.
-function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr) {
-    global $post;
-    if($post AND compare_post_with_location($post->ID)) {
-		$html = "";
-	}
-    return $html;
 }
 
 // add the filter when main loop starts

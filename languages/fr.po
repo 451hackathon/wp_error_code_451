@@ -1,0 +1,90 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: sad\n"
+"POT-Creation-Date: 2017-07-16 15:36+0100\n"
+"PO-Revision-Date: 2017-07-16 15:37+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.10\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-KeywordsList: _e;__\n"
+"X-Poedit-SearchPath-0: ..\n"
+"X-Poedit-SearchPath-1: .\n"
+
+#: ../error_code_451.php:86
+msgid ""
+"The JSON file containing post ids which are blocked cannot be written. "
+"Please make sure that the plugin directory is writable by the webserver."
+msgstr ""
+
+#: ../error_code_451.php:130
+msgid "Error 451 - Unavailable For Legal Reasons."
+msgstr "Erreur 451 - Resource indisponible pour raisons légales."
+
+#: ../error_code_451.php:241
+msgid "451 Unavailable For Legal Reasons"
+msgstr "451 Indisponible pour raisons légales"
+
+#: ../error_code_451.php:254
+msgid ""
+"This status code indicates that the server is denying access to the resource "
+"as a consequence of a legal demand."
+msgstr ""
+
+#: ../error_code_451.php:256
+msgid "The blocking of this content has been requested by"
+msgstr ""
+
+#: ../error_code_451.php:262
+msgid ""
+"If you believe this message is an error and that you are legally entitled to "
+"access the content, click here."
+msgstr ""
+
+#: ../error_code_451.php:262
+msgid "Note: This will set a cookie on your device that will expire in 1 hour."
+msgstr ""
+
+#: ../error_code_451.php:264
+msgid "On an unrelated note, Get Tor."
+msgstr ""
+
+#: ../error_code_451.php:316
+msgid "If you have to enable blocking of this content, please check the box."
+msgstr ""
+
+#: ../error_code_451.php:320
+msgid ""
+"Add comma-separated list of country codes where this page shall be blocked. "
+"When left empty, the content shall be blocked from all locations."
+msgstr ""
+
+#: ../error_code_451.php:326
+msgid "Please specify the URL of the authority has requested the block."
+msgstr ""
+
+#: ../error_code_451.php:332
+msgid ""
+"You may optionally specify a description so that visitors know why the page "
+"is blocked."
+msgstr ""
+
+#: ../error_code_451.php:427
+msgid "Settings Error Code 451"
+msgstr "Paramètres Code Erreur 451"
+
+#: ../error_code_451.php:516
+msgid ""
+"<p>If you wish to report censorship instances to a public collector please "
+"add the URL here.</p> <p><strong>Example: https://registry.wirecdn.com/"
+"report</strong></p><p>Enabling this will send the following information to "
+"the collector:</p> <ul><li>- Site Home URL</url><li>- Date and time</"
+"li><li>- Blocked URL</li><li>- Description of blocking (If provided)</"
+"li><li>- URL of Authority requesting the blocking  (If provided)</li><li>- "
+"List of Countries where Content is Blocked</li><ul> "
+msgstr ""
