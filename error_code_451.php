@@ -150,12 +150,19 @@ function compare_post_with_location($post_id) {
 	return false;
 }
 
+// hide the blocked post thumbnail.
+function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr) {
+	$html = "";
+	return $html;
+}
+
 // add the filter when main loop starts
 add_action( 'loop_start', function( WP_Query $query ) {
     //if ( $query->is_main_query() ) {
     if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
         add_filter( 'the_title', 'alter_censored_title', -10 );
         add_filter( 'the_content', 'alter_censored_content', -10 );
+        add_filter( 'post_thumbnail_html', 'alter_censored_thumbnail', -10 );
    }
 });
 
@@ -166,6 +173,9 @@ add_action( 'loop_end', function( WP_Query $query ) {
    }
    if ( has_filter( 'the_content', 'alter_censored_content' ) ) {
        remove_filter( 'the_content', 'alter_censored_content' );
+   }
+   if ( has_filter( 'post_thumbnail_html', 'alter_censored_thumbnail' ) ) {
+       remove_filter( 'the_title', 'alter_censored_title' );
    }
 });
 
