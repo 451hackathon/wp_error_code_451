@@ -28,6 +28,8 @@ Domain Path: /languages/
 */
 
 $cfg['json_filename'] = "blocked_content_ids.json";
+$cfg['plugin_name'] = "Error Code 451 Plugin";
+$cfg['plugin_version'] = "0.1";
 
 /* Plugin l10n */
 function error_code_451_init() {
@@ -415,7 +417,7 @@ class errorCode451SettingsPage {
         );
         add_settings_section(
             'error_code_451_section_general', // ID
-            'Error Code 451 Settings', // Title
+            'Reporting Settings', // Title
             array( $this, 'print_section_info' ), // Callback
             'error-code-451-settings' // Page
         );
@@ -476,7 +478,7 @@ class errorCode451SettingsPage {
      * Print the Section text
      */
     public function print_section_info() {
-        print _e('Please fill in the corresponding fields.');
+        print _e('If you wish to report censorship instances to a public collector please add the URL here. Example: https://registry.wirecdn.com/report');
     }
     /**
      * Get the settings option array and print one of its values
@@ -520,22 +522,55 @@ if( is_admin() )
     $error_code_451_settings_page = new errorCode451SettingsPage();
 
 
-function report_blocking ($authority, $countries, $description) {
+function error_451_report_blocking_data( $post_id, $post ) {
+
+  /* Verify the nonce before proceeding. */
+  if ( !isset( $_POST['error_451_blocking_nonce'] ) || !wp_verify_nonce( $_POST['error_451_blocking_nonce'], basename( __FILE__ ) ) )
+    return $post_id;
+
+  /* Get the post type object. */
+  $post_type = get_post_type_object( $post->post_type );
+
+  /* Check if the current user has permission to edit the post. */
+  if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+      return $post_id;
+
+
+    if ($_POST['error_451_blocking'] == "yes")
+    {
+
+      report_blocking(( isset( $_POST['error_451_blocking_authority'] ) ? sanitize_text_field( $_POST['error_451_blocking_authority'] ) : '' ),
+                        ( isset( $_POST['error_451_blocking_countries'] ) ? sanitize_text_field( $_POST['error_451_blocking_countries'] ) : '' ),
+                        ( isset( $_POST['error_451_blocking_description'] ) ? sanitize_text_field( $_POST['error_451_blocking_description'] ) : '' ),
+                        get_permalink($post_id),
+                        home_url()
+      );
+    }
+}
+
+add_action( 'save_post', 'error_451_report_blocking_data', 10, 2 );
+
+
+function report_blocking ($authority, $countries, $description, $url, $siteurl) {
+        global $cfg;
+
+        if($countries == "") {
+          $countries = "Global";
+        }
         $options = get_option('error_code_451_option_name');
         if(!empty($options['REPORTING_URL']))
         {
-          $json_string = "{
-                            date: 2017-07-14T02:26:46.681Z,
-                            creator: 'WP Error Code 451 Plugin',
-                            version: '0.1',
-                            url: 'https://example.org',
-                            status: 451,
-                            statusText: '".$description."',
-                            blockedBy: 'https://451wordpressplugin.com',
-                            blockingAuthority: '".$authority."'
-                            blockedIn: '".$countries."'
-                          }";
-
+          $json_string = '{
+                            "date": "'.date('c').'",
+                            "creator": "'.$cfg['plugin_name'].'",
+                            "version": "'.$cfg['plugin_version'].'",
+                            "url": "'.$url.'",
+                            "status": 451,
+                            "statusText": "'.$description.'",
+                            "blockedBy": "'.$siteurl.'",
+                            "blockingAuthority": "'.$authority.'",
+                            "blockedIn": "'.$countries.'"
+                          }';
           $ch = curl_init($options['REPORTING_URL']);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
           curl_setopt($ch, CURLOPT_POSTFIELDS, $json_string);
@@ -550,4 +585,6 @@ function report_blocking ($authority, $countries, $description) {
         }
 
     }
+
+
 ?>
