@@ -422,13 +422,6 @@ class errorCode451SettingsPage {
             array( $this, 'print_section_info' ), // Callback
             'error-code-451-settings' // Page
         );
-  /*      add_settings_field(
-            'API_EMAIL',
-            'Censor Email',
-            array( $this, 'api_email_callback' ),
-            'error-code-451-settings',
-            'error_code_451_section_general'
-        );*/
         add_settings_field(
             'REPORTING_URL',
             'Reporting URL',
@@ -436,13 +429,6 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
-/*        add_settings_field(
-            'HOST',
-            'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
-            array( $this, 'host_callback' ),
-            'error-code-451-settings',
-            'error_code_451_section_general'
-        );*/
         add_settings_field(
             //ClientSideVerification
             'CSV',
@@ -451,6 +437,25 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
+  /*
+      Legacy settings fields, remove for cleanup or reuse if neccesary
+
+      add_settings_field(
+            'API_EMAIL',
+            'Censor Email',
+            array( $this, 'api_email_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+
+/*        add_settings_field(
+            'HOST',
+            'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
+            array( $this, 'host_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+
   /*      add_settings_field(
             'GLOBAL',
             'Check this box if you REALLY REALLY like cake.',
@@ -479,33 +484,41 @@ class errorCode451SettingsPage {
      * Print the Section text
      */
     public function print_section_info() {
-        print _e('If you wish to report censorship instances to a public collector please add the URL here. Example: https://registry.wirecdn.com/report');
+        print _e('<p>If you wish to report censorship instances to a public collector please add the URL here.</p> <p><strong>Example: https://registry.wirecdn.com/report</strong></p><p>Enabling this will send the following information to the collector:</p> <ul><li>- Site Home URL</url><li>- Date and time</li><li>- Blocked URL</li><li>- Description of blocking (If provided)</li><li>- URL of Authority requesting the blocking  (If provided)</li><li>- List of Countries where Content is Blocked</li><ul> ');
     }
+
     /**
      * Get the settings option array and print one of its values
      */
-    public function api_email_callback() {
-        printf(
-            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
-            esc_attr( $this->options['API_EMAIL'])
-        );
-    }
     public function api_key_callback() {
         printf(
             '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" />',
             esc_attr( $this->options['REPORTING_URL'])
         );
     }
+
+    public function CSV_callback() {
+	    $options = get_option('error_code_451_option_name');
+        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
+    }
+
+/*
+  Legacy code, remove for cleanup or reuse if neccesary
+
+ public function api_email_callback() {
+        printf(
+            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
+            esc_attr( $this->options['API_EMAIL'])
+        );
+
+
     public function host_callback() {
         printf(
             '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr"  />',
             esc_attr( $this->options['HOST'])
         );
-    }
-    public function CSV_callback() {
-	    $options = get_option('error_code_451_option_name');
-        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
-    }
+    }  }
+
     public function global_callback() {
 	    $options = get_option('error_code_451_option_name');
         echo '<input name="error_code_451_option_name[GLOBAL]" id="GLOBAL" type="checkbox" value="1" ' . checked( 1, $options['GLOBAL'], false ) . ' /> sure';
@@ -516,7 +529,7 @@ class errorCode451SettingsPage {
 	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
 	    esc_attr( $this->options["resultspage_$locale"])
 	    );
-    }
+    }  */
 }
 
 if( is_admin() )
