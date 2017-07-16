@@ -138,6 +138,15 @@ function alter_censored_content( $content ) {
     return $content;
 }
 
+// hide the blocked post thumbnail.
+function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr) {
+    global $post;
+    if($post AND compare_post_with_location($post->ID)) {
+		$html = "";
+	}
+    return $html;
+}
+
 function compare_post_with_location($post_id) {
     global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
@@ -148,15 +157,6 @@ function compare_post_with_location($post_id) {
         return true;
     }
     return false;
-}
-
-// hide the blocked post thumbnail.
-function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr) {
-    global $post;
-    if($post AND compare_post_with_location($post->ID)) {
-		$html = "";
-	}
-    return $html;
 }
 
 // add the filter when main loop starts
