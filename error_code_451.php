@@ -11,7 +11,7 @@ Domain Path: /languages/
 */
 
 /*
-    Copyright 2017 Ulrike <u@451f.org>, Tara
+    Copyright 2017 Ulrike <u@451f.org>, Tara <me@tarakyiee.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as
@@ -27,6 +27,7 @@ Domain Path: /languages/
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+$cfg['json_filename'] = "blocked_content_ids.json";
 
 /* Plugin l10n */
 function error_code_451_init() {
@@ -60,8 +61,78 @@ function get_client_geocode() {
       curl_setopt_array( $ch, $options );
       $ch_result = curl_exec($ch);
       $geo_ip = json_decode($ch_result);
-      return $geo_ip->country_code;
+      if($geo_ip->country_code)
+          return $geo_ip->country_code;
 }
+
+// Sanitize IDs, may contain letters, numbers, dots and commas.
+function sanitize_comma_separated($input) {
+    $input = preg_replace("/[^a-zA-Z0-9\.\,\:]+/", "", $input);
+	$input = str_replace(array('\r', '\n', '%0a', '%0d' ), '', trim($input));
+    return $input;
+}
+
+/* writes array data to JSON */
+function write_json($data, $filename) {
+    $plugin_dir = realpath(dirname(__FILE__));
+    $handler = fopen("$plugin_dir/$filename", "w+");
+    fwrite($handler, json_encode($data));
+    fclose($handler);
+    return true;
+}
+
+/* read arraay from JSON */
+function read_json($filename) {
+    $plugin_dir = realpath(dirname(__FILE__));
+	if(file_exists("$plugin_dir/$filename")) {
+		$data = json_decode(file_get_contents("$plugin_dir/$filename"));
+		return $data;
+	}
+}
+
+// this will be useful for having a sitemap of blocked files as well as for the loops and RSS loop.
+function find_blocked_content_ids() {
+	global $cfg;
+	$i = 0;
+	// we want to create an array of all blocked content
+	$blocked_content_args = array(
+		'meta_query' => array(
+			array(
+				'key' => 'error_451_blocking',
+				'value' => 'yes'
+			)
+		)
+	);
+	$blocked_content_query = new WP_Query( $blocked_content_args );
+    foreach ($blocked_content_query->posts as $post) {
+		$blocked_content_ids[$i]['post_id'] = $post->ID;
+		// fixme: we need to add the country codes in which the posts are blocked as well as some other information which we want to display in the loop.
+		$i++;
+    }
+    if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
+		echo "Write of JSON file failed.";
+    }
+}
+
+// save all blocked content to JSON file when updating a post.
+add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
+
+// alter the query to not display these posts.
+function error_451_check_partial_blocked_content($query) {
+	global $cfg;
+    $blocked_content_ids = read_json($cfg['json_filename']);
+	if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
+		// this would remove the posts entirely from the loop.
+		foreach($blocked_content_ids as $blocked_content) {
+			$post_ids = $blocked_content['post_id'];
+		}
+	    $query->set('post__not_in', $post_ids);
+		// instead, we want to modify their title and content, but only in the areas where they are blocked!
+	}
+}
+
+/* Check for blocked content on page load */
+add_action( 'pre_get_posts', 'error_451_check_partial_blocked_content');
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
@@ -72,13 +143,14 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
+	// get client Geolocation
     $client_geo_origin = get_client_geocode();
 
-    //get blocked countries from post metadata
-    $blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true), -1);
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin) && $_COOKIE["ignore"] != 1) {
+		//get blocked countries from post metadata
+		$blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
 
-    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes") {
-        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries) ) {
+        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
             $error_code = 451;
     		$site_url = site_url();
     		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
@@ -90,14 +162,28 @@ function error_451_check_blocked() {
 
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
-    		$user_error_message  = '<html><head><body><h1>451 Unavailable For Legal Reasons</h1>';
+    		$user_error_message  = '<html><head>
+                <script type="text/javascript">
+                  function setIgnore() {
+                      var date = new Date();
+		                  date.setTime(date.getTime()+(30*24*60*60*1000));
+		                  var expires = ";"+date.toGMTString();
+                      document.cookie = "ignore=1"+expires+"; path=/";
+                      location.reload();
+                  }
+                </script>
+            </head><body><h1>451 Unavailable For Legal Reasons</h1>';
     		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
     		if(!empty($blocking_description)) {
         	    $user_error_message .= '<p>'.$blocking_description.'</p>';
     		}
     		if(!empty($blocking_authority)) {
-        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.</p>';
+        	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
     		}
+        $options = get_option('error_code_451_option_name');
+        if($options['CSV']) {
+              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
+        }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
     		exit;
@@ -126,10 +212,9 @@ function error_451_add_post_meta_boxes() {
         'post',         // Admin page (or post type)
         'side',         // Context
         'default'       // Priority
-  );
+    );
 
-
-      add_meta_box(
+     add_meta_box(
           'error-451-blocking-page', // Unique ID
           esc_html__( 'Configure blocking / Error 451', 'error-451' ), // Title
           'error_451_meta_box',  // Callback function
@@ -186,9 +271,23 @@ function error_451_save_blocking_meta( $post_id, $post ) {
     // which meta keys do we want to update?
     $meta_keys = array('error_451_blocking', 'error_451_blocking_authority', 'error_451_blocking_countries', 'error_451_blocking_description');
 
+
     /* Get the posted data and sanitize it. */
     foreach($meta_keys as $meta_key) {
-        $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+		if($meta_key == 'error_451_blocking_countries') {
+            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_comma_separated( $_POST[$meta_key] ) : '' );
+		} else if ($meta_key = 'error_451_blocking') {
+            if ($_POST['error_451_blocking'] == "yes")
+            {
+                report_blocking(( isset( $_POST['error_451_blocking_authority'] ) ? sanitize_text_field( $_POST['error_451_blocking_authority'] ) : '' ),
+                                ( isset( $_POST['error_451_blocking_countries'] ) ? sanitize_text_field( $_POST['error_451_blocking_countries'] ) : '' ),
+                                ( isset( $_POST['error_451_blocking_description'] ) ? sanitize_text_field( $_POST['error_451_blocking_description'] ) : '' )
+              );
+            }
+            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+		} else {
+            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
+		}
 
         /* Get the meta value of the custom field key. */
         $meta_value = get_post_meta( $post_id, $meta_key, true );
@@ -217,4 +316,198 @@ add_action( 'load-post-new.php', 'error_451_post_meta_boxes_setup' );
 
 /* Save post meta on the 'save_post' hook. */
 add_action( 'save_post', 'error_451_save_blocking_meta', 10, 2 );
+
+// Create configuration page for wp-admin. Each domain shall configure their REPORTING_URL, API_EMAIL, HOST and results page.
+class errorCode451SettingsPage {
+    /**
+     * Holds the values to be used in the fields callbacks
+     */
+    private $options;
+    /**
+     * Start up
+     */
+    public function __construct() {
+        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
+        add_action( 'admin_init', array( $this, 'page_init' ) );
+    }
+    /**
+     * Add options page
+     */
+    public function add_plugin_page() {
+        // This page will be under "Settings"
+        add_options_page(
+            'Settings Admin',
+            'Error Code 451 Settings',
+            'manage_options',
+            'error-code-451-settings',
+            array( $this, 'create_admin_page' )
+        );
+    }
+    /**
+     * Options page callback
+     */
+    public function create_admin_page() {
+        // Set class property
+        $this->options = get_option( 'error_code_451_option_name' );
+        ?>
+        <div class="wrap">
+            <?php screen_icon(); ?>
+            <h2><?php _e('Settings Error Code 451'); ?></h2>
+            <form method="post" action="options.php">
+            <?php
+                // This prints out all hidden setting fields
+                settings_fields( 'error_code_451_option_group' );
+                do_settings_sections( 'error-code-451-settings' );
+                submit_button();
+            ?>
+            </form>
+        </div>
+        <?php
+    }
+    /**
+     * Register and add settings
+     */
+    public function page_init() {
+        register_setting(
+            'error_code_451_option_group', // Option group
+            'error_code_451_option_name', // Option name
+            array( $this, 'sanitize' ) // Sanitize
+        );
+        add_settings_section(
+            'error_code_451_section_general', // ID
+            'Error Code 451 Settings', // Title
+            array( $this, 'print_section_info' ), // Callback
+            'error-code-451-settings' // Page
+        );
+  /*      add_settings_field(
+            'API_EMAIL',
+            'Censor Email',
+            array( $this, 'api_email_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+        add_settings_field(
+            'REPORTING_URL',
+            'Reporting URL',
+            array( $this, 'api_key_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+/*        add_settings_field(
+            'HOST',
+            'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
+            array( $this, 'host_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+        add_settings_field(
+            //ClientSideVerification
+            'CSV',
+            'Enable client side verification. (Allow users to self-report over-censorship.)',
+            array( $this, 'CSV_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );
+  /*      add_settings_field(
+            'GLOBAL',
+            'Check this box if you REALLY REALLY like cake.',
+            array( $this, 'global_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+
+    }
+    /**
+     * Sanitize each setting field as needed
+     *
+     * @param array $input Contains all settings fields as array keys
+     */
+    public function sanitize( $input ) {
+    if( !empty( $input['REPORTING_URL'] ) )
+        $input['REPORTING_URL'] = sanitize_text_field( $input['REPORTING_URL'] );
+    if( !empty( $input['API_EMAIL'] ) )
+        $input['API_EMAIL'] = sanitize_email( $input['API_EMAIL'] );
+    if( !empty( $input['HOST'] ) )
+        $input['HOST'] = sanitize_text_field( $input['HOST'] );
+
+        return $input;
+    }
+    /**
+     * Print the Section text
+     */
+    public function print_section_info() {
+        print _e('Please fill in the corresponding fields.');
+    }
+    /**
+     * Get the settings option array and print one of its values
+     */
+    public function api_email_callback() {
+        printf(
+            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
+            esc_attr( $this->options['API_EMAIL'])
+        );
+    }
+    public function api_key_callback() {
+        printf(
+            '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" />',
+            esc_attr( $this->options['REPORTING_URL'])
+        );
+    }
+    public function host_callback() {
+        printf(
+            '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr"  />',
+            esc_attr( $this->options['HOST'])
+        );
+    }
+    public function CSV_callback() {
+	    $options = get_option('error_code_451_option_name');
+        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
+    }
+    public function global_callback() {
+	    $options = get_option('error_code_451_option_name');
+        echo '<input name="error_code_451_option_name[GLOBAL]" id="GLOBAL" type="checkbox" value="1" ' . checked( 1, $options['GLOBAL'], false ) . ' /> sure';
+    }
+    public function resultspage_status_callback($args) {
+	$locale = $args['locale'];
+	printf(
+	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
+	    esc_attr( $this->options["resultspage_$locale"])
+	    );
+    }
+}
+
+if( is_admin() )
+    $error_code_451_settings_page = new errorCode451SettingsPage();
+
+
+function report_blocking ($authority, $countries, $description) {
+        $options = get_option('error_code_451_option_name');
+        if(!empty($options['REPORTING_URL']))
+        {
+          $json_string = "{
+                            date: 2017-07-14T02:26:46.681Z,
+                            creator: 'WP Error Code 451 Plugin',
+                            version: '0.1',
+                            url: 'https://example.org',
+                            status: 451,
+                            statusText: '".$description."',
+                            blockedBy: 'https://451wordpressplugin.com',
+                            blockingAuthority: '".$authority."'
+                            blockedIn: '".$countries."'
+                          }";
+
+          $ch = curl_init($options['REPORTING_URL']);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+          curl_setopt($ch, CURLOPT_POSTFIELDS, $json_string);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                       'Content-Type: application/json',
+                       'Content-Length: ' . strlen($json_string))
+                      );
+
+         return curl_exec($ch);
+
+        }
+
+    }
 ?>

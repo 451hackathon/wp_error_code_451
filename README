@@ -23,7 +23,7 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
 
 * what if a page is blocked in two different countries for 2 different reasons?
 * What happens to a post in a loop?
-* test a page vs a post
+* test a page vs a post (Tara: DONE! Ready for testing)
 * what about custom post formats?
 * test all countries
 * improve visual user message.
@@ -34,4 +34,4 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
 
 * create a page/xml/sitemap will all blocked resources on the domain
 * scheduled block: add an expiry date for the block
-* propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility."
+* propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility." (TARA: DONE, please test.)
