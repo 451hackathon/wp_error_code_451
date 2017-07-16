@@ -20,18 +20,19 @@ We serve two additional headers: blocked-by and blocking-authority.
 blocked-by contains the domain, blocking-authority contains the URI to the authority that has requested the block.
 
 ## TODO
+ * What happens to a post in a loop?
+  -> we will only block the single resource.
+  -> when in a category or archive, we will display pn altered post content und post title, so that censorship becomes visible.
+* report to the crawler:
+  - Which information should be public and which obfuscated?
+  - Tell the user what information they are sending and advertise them that this might be problematic in some jurisdictions to report.
+* Make it possible to have the JSON filename as an option in the backend
+* better verify if the plugin directory is writable for the JSON file to be written there.
 
-* what if a page is blocked in two different countries for 2 different reasons?
-* What happens to a post in a loop?
-* test a page vs a post (Tara: DONE! Ready for testing)
+## Ideas for improvement
+
 * what about custom post formats?
-* test all countries
-* improve visual user message.
-* sanitize commaseparated list
-* report to the crawler: should this be done by default? Which information should be public and which obfuscated?
-
-## Ideas
-
 * create a page/xml/sitemap will all blocked resources on the domain
+  - Think about advertising the existence of the JSON file in wp_head ? -> but we don't have a spec for this, so it might not be that useful right now.
 * scheduled block: add an expiry date for the block
-* propose an "informed consent" checkbox: "I'm not in this jurisdiction, please serve the page to me on my own responsibility." (TARA: DONE, please test.)
+* what if a page is blocked in two different countries for 2 different reasons?
