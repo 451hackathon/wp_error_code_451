@@ -30,6 +30,9 @@ We serve two additional headers: blocked-by and blocking-authority.
 blocked-by contains the domain, blocking-authority contains the URI to the authority that has requested the block.
 
 ## TODO
+
+* Hide post thumbnail
+* if necessary: hide categories, hide tags.
 * Modify the Readme format to match Wordpress' requirements
 * Make it possible to have the JSON filename as an option in the backend
 * better verify if the plugin directory is writable for the JSON file to be written there.
