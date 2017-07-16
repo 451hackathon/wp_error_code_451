@@ -162,8 +162,8 @@ function alter_censored_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $
 // add the filter when main loop starts
 add_action( 'loop_start', function( WP_Query $query ) {
     if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
-        add_filter( 'the_title', 'alter_censored_title', -10 );
-        add_filter( 'the_content', 'alter_censored_content', -10 );
+        add_filter( 'the_title', 'alter_censored_title', -10, 1 );
+        add_filter( 'the_content', 'alter_censored_content', -10, 1 );
         add_filter( 'post_thumbnail_html', 'alter_censored_thumbnail', -10, 5 );
    }
 });
