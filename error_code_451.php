@@ -106,7 +106,7 @@ function find_blocked_content_ids() {
 	$blocked_content_query = new WP_Query( $blocked_content_args );
     foreach ($blocked_content_query->posts as $post) {
 		$blocked_content_ids[$i]['post_id'] = $post->ID;
-		// fixme: we need to add the country codes in which the posts are blocked as well as some other information which we want to display in the loop.
+		$blocked_content_ids[$i]['blocked_countries'] = get_post_meta( $post->ID, 'error_451_blocking_countries', true);
 		$i++;
     }
     if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
@@ -117,6 +117,57 @@ function find_blocked_content_ids() {
 // save all blocked content to JSON file when updating a post.
 add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 
+
+//FIXME: merge calter_censored_title and alter_censored_content
+// the function that alters post titles
+function alter_censored_title( $title ) {
+    global $cfg, $post;
+    $blocked_content_ids = read_json($cfg['json_filename']);
+	foreach($blocked_content_ids as $blocked_content) {
+		$post_ids[] = $blocked_content->post_id;
+	    // FIXME: verify blocked countries here
+	}
+    if ( $post && in_array( $post->ID, $post_ids, true ) ) {
+        $title = "Error 451 - Unavailable For Legal Reasons." ;
+    }
+
+    return $title;
+}
+// the function that alters post content
+function alter_censored_content( $content ) {
+    global $cfg, $post;
+    $blocked_content_ids = read_json($cfg['json_filename']);
+	foreach($blocked_content_ids as $blocked_content) {
+		$post_ids[] = $blocked_content->post_id;
+	    // FIXME: verify blocked countries here
+	}
+    if ( $post && in_array( $post->ID, $post_ids, true ) ) {
+        $content = "This content has been blocked" ;
+    }
+
+    return $content;
+}
+
+// add the filter when main loop starts
+add_action( 'loop_start', function( WP_Query $query ) {
+    if ( $query->is_main_query() ) {
+    //if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
+       add_filter( 'the_title', 'alter_censored_title', -10 );
+       add_filter( 'the_content', 'alter_censored_content', -10 );
+   }
+});
+
+// remove the filter when main loop ends
+add_action( 'loop_end', function( WP_Query $query ) {
+   if ( has_filter( 'the_title', 'alter_censored_title' ) ) {
+       remove_filter( 'the_content', 'alter_censored_title' );
+   }
+   if ( has_filter( 'the_content', 'alter_censored_content' ) ) {
+       remove_filter( 'the_content', 'alter_censored_content' );
+   }
+});
+
+/*
 // alter the query to not display these posts.
 function error_451_check_partial_blocked_content($query) {
 	global $cfg;
@@ -125,14 +176,13 @@ function error_451_check_partial_blocked_content($query) {
 		foreach($blocked_content_ids as $blocked_content) {
 			$post_ids[] = $blocked_content->post_id;
 		}
-		// this would remove the posts entirely from the loop.
 	    $query->set('post__not_in', $post_ids);
-		// instead, we want to modify their title and content, but only in the areas where they are blocked!
 	}
 }
 
-/* Check for blocked content on page load */
+// Check for blocked content on page load
 add_action( 'pre_get_posts', 'error_451_check_partial_blocked_content');
+*/
 
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
@@ -276,15 +326,6 @@ function error_451_save_blocking_meta( $post_id, $post ) {
     foreach($meta_keys as $meta_key) {
 		if($meta_key == 'error_451_blocking_countries') {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_comma_separated( $_POST[$meta_key] ) : '' );
-		} else if ($meta_key = 'error_451_blocking') {
-            if ($_POST['error_451_blocking'] == "yes")
-            {
-                report_blocking(( isset( $_POST['error_451_blocking_authority'] ) ? sanitize_text_field( $_POST['error_451_blocking_authority'] ) : '' ),
-                                ( isset( $_POST['error_451_blocking_countries'] ) ? sanitize_text_field( $_POST['error_451_blocking_countries'] ) : '' ),
-                                ( isset( $_POST['error_451_blocking_description'] ) ? sanitize_text_field( $_POST['error_451_blocking_description'] ) : '' )
-              );
-            }
-            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 		} else {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 		}
