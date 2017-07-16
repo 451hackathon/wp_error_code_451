@@ -418,7 +418,7 @@ class errorCode451SettingsPage {
         );
         add_settings_section(
             'error_code_451_section_general', // ID
-            'Error Code 451 Settings', // Title
+            'Reporting Settings', // Title
             array( $this, 'print_section_info' ), // Callback
             'error-code-451-settings' // Page
         );
@@ -479,7 +479,7 @@ class errorCode451SettingsPage {
      * Print the Section text
      */
     public function print_section_info() {
-        print _e('Please fill in the corresponding fields.');
+        print _e('If you wish to report censorship instances to a public collector please add the URL here. Example: https://registry.wirecdn.com/report');
     }
     /**
      * Get the settings option array and print one of its values
