@@ -20,28 +20,6 @@ Site admins can check a box which will allow visitors to see blocked content any
 
 https://tools.ietf.org/html/rfc7725
 
- When an entity blocks access to a resource and returns status 451, it
- SHOULD include a "Link" HTTP header field [RFC5988] whose value is a
- URI reference [RFC3986] identifying itself.  When used for this
- purpose, the "Link" header field MUST have a "rel" parameter whose
- value is "blocked-by".
-
 We serve two additional headers: blocked-by and blocking-authority.
 blocked-by contains the domain, blocking-authority contains the URI to the authority that has requested the block.
-
-## TODO
-
-* Hide post thumbnail
-* if necessary: hide categories, hide tags.
-* Modify the Readme format to match Wordpress' requirements
-* Make it possible to have the JSON filename as an option in the backend
-* better verify if the plugin directory is writable for the JSON file to be written there.
-
-## Ideas for improvement
-
-* what about custom post formats?
-* create a page/xml/sitemap will all blocked resources on the domain
-  - Think about advertising the existence of the JSON file in wp_head ? -> but we don't have a spec for this, so it might not be that useful right now.
-* scheduled block: add an expiry date for the block
-* what if a page is blocked in two different countries for 2 different reasons?
-* Freegeoip API has arbitrary limit of 15,000 queries per hour. Implementing geolocation in plugin would ensure limit never reached (Priority: Very low.)
+The blocking-authority header is not yet in the RFC.
