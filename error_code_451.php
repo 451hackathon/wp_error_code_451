@@ -11,7 +11,7 @@ Domain Path: /languages/
 */
 
 /*
-    Copyright 2017 Ulrike <u@451f.org>, Tara
+    Copyright 2017 Ulrike <u@451f.org>, Tara <me@tarakyiee.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as
@@ -180,8 +180,9 @@ function error_451_check_blocked() {
     		if(!empty($blocking_authority)) {
         	    $user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
     		}
-        if(true) {
-              $user_error_message .= '<p><strong>If you believe this message is an error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
+        $options = get_option('error_code_451_option_name');
+        if($options['CSV']) {
+              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
         }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
@@ -378,13 +379,13 @@ class errorCode451SettingsPage {
             array( $this, 'print_section_info' ), // Callback
             'error-code-451-settings' // Page
         );
-        add_settings_field(
+  /*      add_settings_field(
             'API_EMAIL',
             'Censor Email',
             array( $this, 'api_email_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
-        );
+        );*/
         add_settings_field(
             'REPORTING_URL',
             'Reporting URL',
@@ -392,27 +393,28 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
-        add_settings_field(
+/*        add_settings_field(
             'HOST',
             'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
             array( $this, 'host_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
-        );
+        );*/
         add_settings_field(
-            'SSL',
-            'Do you like cake? Have you had cake recently?',
-            array( $this, 'ssl_callback' ),
+            //ClientSideVerification
+            'CSV',
+            'Enable client side verification. (Allow users to self-report over-censorship.)',
+            array( $this, 'CSV_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
         );
-        add_settings_field(
+  /*      add_settings_field(
             'GLOBAL',
             'Check this box if you REALLY REALLY like cake.',
             array( $this, 'global_callback' ),
             'error-code-451-settings',
             'error_code_451_section_general'
-        );
+        );*/
 
     }
     /**
@@ -441,25 +443,25 @@ class errorCode451SettingsPage {
      */
     public function api_email_callback() {
         printf(
-            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" required />',
+            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
             esc_attr( $this->options['API_EMAIL'])
         );
     }
     public function api_key_callback() {
         printf(
-            '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" required />',
+            '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" />',
             esc_attr( $this->options['REPORTING_URL'])
         );
     }
     public function host_callback() {
         printf(
-            '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr" required />',
+            '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr"  />',
             esc_attr( $this->options['HOST'])
         );
     }
-    public function ssl_callback() {
+    public function CSV_callback() {
 	    $options = get_option('error_code_451_option_name');
-        echo '<input name="error_code_451_option_name[SSL]" id="SSL" type="checkbox" value="1" ' . checked( 1, $options['SSL'], false ) . ' /> yes';
+        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
     }
     public function global_callback() {
 	    $options = get_option('error_code_451_option_name');
@@ -468,7 +470,7 @@ class errorCode451SettingsPage {
     public function resultspage_status_callback($args) {
 	$locale = $args['locale'];
 	printf(
-	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr" required />',
+	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
 	    esc_attr( $this->options["resultspage_$locale"])
 	    );
     }
