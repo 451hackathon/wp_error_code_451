@@ -31,17 +31,16 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
 
 ## TODO
 
-* Hide post thumbnail
-* if necessary: hide categories, hide tags.
-* Modify the Readme format to match Wordpress' requirements
-* Make it possible to have the JSON filename as an option in the backend
 * better verify if the plugin directory is writable for the JSON file to be written there.
+* Modify the Readme format to match Wordpress' requirements
 
 ## Ideas for improvement
 
 * what about custom post formats?
+* Add a header on archive pages which have partially blocked content, as soon as this has been implemented in the RFC.
 * create a page/xml/sitemap will all blocked resources on the domain
   - Think about advertising the existence of the JSON file in wp_head ? -> but we don't have a spec for this, so it might not be that useful right now.
-* scheduled block: add an expiry date for the block
+* Make it possible to have the JSON filename as an option in the backend
 * what if a page is blocked in two different countries for 2 different reasons?
 * Freegeoip API has arbitrary limit of 15,000 queries per hour. Implementing geolocation in plugin would ensure limit never reached (Priority: Very low.)
+* scheduled block: add an expiry date for the block
