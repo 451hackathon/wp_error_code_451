@@ -23,6 +23,9 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
  * What happens to a post in a loop?
   -> we will only block the single resource.
   -> when in a category or archive, we will display pn altered post content und post title, so that censorship becomes visible.
+* externalize JS
+* Modify the Readme format to match Wordpress' requirements
+* ake the error message translateable
 * report to the crawler:
   - Which information should be public and which obfuscated?
   - Tell the user what information they are sending and advertise them that this might be problematic in some jurisdictions to report.
