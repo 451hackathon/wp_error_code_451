@@ -120,49 +120,49 @@ function find_blocked_content_ids() {
 add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 
 
-//FIXME: merge calter_censored_title and alter_censored_content
 // the function that alters post titles
 function alter_censored_title( $title ) {
-    global $cfg, $post;
-    $blocked_content_ids = read_json($cfg['json_filename']);
-	foreach($blocked_content_ids as $blocked_content) {
-		$post_ids[] = $blocked_content->post_id;
-	    // FIXME: verify blocked countries here
-	}
-    if ( $post && in_array( $post->ID, $post_ids, true ) ) {
-        $title = "Error 451 - Unavailable For Legal Reasons." ;
+    global $post;
+    if($post AND compare_post_with_location($post->ID)) {
+		$title = __("Error 451 - Unavailable For Legal Reasons.", 'error_451') ;
     }
-
     return $title;
 }
+
 // the function that alters post content
 function alter_censored_content( $content ) {
-    global $cfg, $post;
+    global $post;
+    if($post AND compare_post_with_location($post->ID)) {
+        $content = user_error_message($post->ID);
+    }
+    return $content;
+}
+
+function compare_post_with_location($post_id) {
+	global $cfg;
     $blocked_content_ids = read_json($cfg['json_filename']);
 	foreach($blocked_content_ids as $blocked_content) {
 		$post_ids[] = $blocked_content->post_id;
-	    // FIXME: verify blocked countries here
 	}
-    if ( $post && in_array( $post->ID, $post_ids, true ) ) {
-        $content = user_error_message($post->ID);
+    if(in_array( $post_id, $post_ids, true ) AND error_451_check_client_location_against_block($post_id)) {
+		return true;
     }
-
-    return $content;
+	return false;
 }
 
 // add the filter when main loop starts
 add_action( 'loop_start', function( WP_Query $query ) {
     //if ( $query->is_main_query() ) {
     if ($query->is_archive() || $query->is_feed() || $query->is_home() || $query->is_search() || $query->is_tag() && $query->is_main_query()) {
-       add_filter( 'the_title', 'alter_censored_title', -10 );
-       add_filter( 'the_content', 'alter_censored_content', -10 );
+        add_filter( 'the_title', 'alter_censored_title', -10 );
+        add_filter( 'the_content', 'alter_censored_content', -10 );
    }
 });
 
 // remove the filter when main loop ends
 add_action( 'loop_end', function( WP_Query $query ) {
    if ( has_filter( 'the_title', 'alter_censored_title' ) ) {
-       remove_filter( 'the_content', 'alter_censored_title' );
+       remove_filter( 'the_title', 'alter_censored_title' );
    }
    if ( has_filter( 'the_content', 'alter_censored_content' ) ) {
        remove_filter( 'the_content', 'alter_censored_content' );
@@ -186,6 +186,21 @@ function error_451_check_partial_blocked_content($query) {
 add_action( 'pre_get_posts', 'error_451_check_partial_blocked_content');
 */
 
+function error_451_check_client_location_against_block($post_id) {
+	// get client Geolocation
+    $client_geo_origin = get_client_geocode();
+
+	// check post
+    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin) && $_COOKIE["ignore"] != 1) {
+		//get blocked countries from post metadata
+		$blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
+        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 // Serve 451 http_response_code and send additional headers
 function error_451_check_blocked() {
 	// Get access to the current WordPress object instance
@@ -195,31 +210,23 @@ function error_451_check_blocked() {
 	$current_url = $current_url . $_SERVER['REDIRECT_URL'];
 	$post_id = url_to_postid($current_url);
 
-	// get client Geolocation
-    $client_geo_origin = get_client_geocode();
+    if(error_451_check_client_location_against_block($post_id)) {
+		$error_code = 451;
+		$site_url = site_url();
+		$script_url = plugins_url('', __FILE__).'/js/error_451.js';
 
-    if(get_post_meta( $post_id, 'error_451_blocking', true) == "yes" AND isset($client_geo_origin) && $_COOKIE["ignore"] != 1) {
-		//get blocked countries from post metadata
-		$blocked_countries = explode(',', get_post_meta( $post_id, 'error_451_blocking_countries', true));
+		// send additional headers
+		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
+		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
 
-        if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
-            $error_code = 451;
-    		$site_url = site_url();
-   			$script_url = plugins_url('', __FILE__).'/js/error_451.js';
-
-    		// send additional headers
-    		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
-    		header('Link: <'.$blocking_authority.'>; rel="blocking-authority"', false, $error_code);
-
-    		// redirect to get the correct HTTP status code for this page.
-    		wp_redirect("/451", 451);
-    		$user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
-                                    </head><body><h1>451 Unavailable For Legal Reasons</h1>';
-    		$user_error_message .= user_error_message($post_id);
-			$user_error_message .= '</body></html>';
-			echo $user_error_message;
-    		exit;
-        }
+		// redirect to get the correct HTTP status code for this page.
+		wp_redirect("/451", 451);
+		$user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
+								</head><body><h1>'.__('451 Unavailable For Legal Reasons', 'error_451').'</h1>';
+		$user_error_message .= user_error_message($post_id);
+		$user_error_message .= '</body></html>';
+		echo $user_error_message;
+		exit;
     }
 }
 
@@ -227,17 +234,18 @@ function user_error_message($post_id) {
     $options = get_option('error_code_451_option_name');
 	$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
 	$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
-	$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
+
+	$user_error_message .= '<p>'.__('This status code indicates that the server is denying access to the resource as a consequence of a legal demand.', 'error_451').'</p>';
 	if(!empty($blocking_description)) {
 		$user_error_message .= '<p>'.$blocking_description.'</p>';
 	}
 	if(!empty($blocking_authority)) {
-		$user_error_message .= '<p>The blocking of this content has been requested by <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
+		$user_error_message .= '<p>'.__('The blocking of this content has been requested by', 'error_451').' <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
 	}
     if($options['CSV']) {
-          $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setError451Ignore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
+          $user_error_message .= '<p><a href="#" onclick="setError451Ignore()">'.__('If you believe this message is in error and that you are legally entitled to access the content, click here.', 'error_451').'</a> '.__('Note: This will set a cookie on your device that will expire in 1 hour.', 'error_451').'</p>';
     }
-    $user_error_message .= '<p>'.__('On an unrelated note,', 'error_451').' <a href="https://gettor.torproject.org/">Get Tor.</a></p>';
+    $user_error_message .= '<p><a href="https://gettor.torproject.org/">'.__('On an unrelated note, Get Tor.', 'error_451').'</a></p>';
     return $user_error_message;
 }
 
