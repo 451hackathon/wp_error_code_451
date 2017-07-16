@@ -117,12 +117,15 @@ function find_blocked_content_ids() {
 // save all blocked content to JSON file when updating a post.
 add_action( 'save_post', 'find_blocked_content_ids', 10, 2 );
 
+
+//FIXME: merge calter_censored_title and alter_censored_content
 // the function that alters post titles
 function alter_censored_title( $title ) {
     global $cfg, $post;
     $blocked_content_ids = read_json($cfg['json_filename']);
 	foreach($blocked_content_ids as $blocked_content) {
 		$post_ids[] = $blocked_content->post_id;
+	    // FIXME: verify blocked countries here
 	}
     if ( $post && in_array( $post->ID, $post_ids, true ) ) {
         $title = "Error 451 - Unavailable For Legal Reasons." ;
@@ -136,6 +139,7 @@ function alter_censored_content( $content ) {
     $blocked_content_ids = read_json($cfg['json_filename']);
 	foreach($blocked_content_ids as $blocked_content) {
 		$post_ids[] = $blocked_content->post_id;
+	    // FIXME: verify blocked countries here
 	}
     if ( $post && in_array( $post->ID, $post_ids, true ) ) {
         $content = "This content has been blocked" ;
@@ -322,15 +326,6 @@ function error_451_save_blocking_meta( $post_id, $post ) {
     foreach($meta_keys as $meta_key) {
 		if($meta_key == 'error_451_blocking_countries') {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_comma_separated( $_POST[$meta_key] ) : '' );
-		} else if ($meta_key = 'error_451_blocking') {
-            if ($_POST['error_451_blocking'] == "yes")
-            {
-                report_blocking(( isset( $_POST['error_451_blocking_authority'] ) ? sanitize_text_field( $_POST['error_451_blocking_authority'] ) : '' ),
-                                ( isset( $_POST['error_451_blocking_countries'] ) ? sanitize_text_field( $_POST['error_451_blocking_countries'] ) : '' ),
-                                ( isset( $_POST['error_451_blocking_description'] ) ? sanitize_text_field( $_POST['error_451_blocking_description'] ) : '' )
-              );
-            }
-            $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 		} else {
             $new_meta_value[$meta_key] = ( isset( $_POST[$meta_key] ) ? sanitize_text_field( $_POST[$meta_key] ) : '' );
 		}
