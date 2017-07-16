@@ -83,8 +83,7 @@ function write_json($data, $filename) {
 		fclose($handler);
 		return true;
 	} else {
-        _e('The JSON file containing post ids which are blocked cannot be written. Please make sure that the plugin directory is writable by the webserver.', 'error_451');
-		return false;
+		 return new WP_Error('broke', __('The JSON file containing post ids which are blocked cannot be written. Please make sure that the plugin directory is writable by the webserver.', 'error_451'));
 	}
 }
 
