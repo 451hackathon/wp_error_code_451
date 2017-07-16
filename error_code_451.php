@@ -237,11 +237,11 @@ function user_error_message($post_id) {
 	$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
 	$user_error_message .= '<p>'.__('This status code indicates that the server is denying access to the resource as a consequence of a legal demand.', 'error_451').'</p>';
-	if(!empty($blocking_description)) {
-		$user_error_message .= '<p>'.$blocking_description.'</p>';
-	}
 	if(!empty($blocking_authority)) {
 		$user_error_message .= '<p>'.__('The blocking of this content has been requested by', 'error_451').' <a href="'.$blocking_authority.'">'.$blocking_authority.'</a>.';
+	}
+	if(!empty($blocking_description)) {
+		$user_error_message .= '<p>'.$blocking_description.'</p>';
 	}
     if($options['CSV']) {
           $user_error_message .= '<p><a href="#" onclick="setError451Ignore()">'.__('If you believe this message is an error and that you are legally entitled to access the content, click here.', 'error_451').'</a> '.__('Note: This will set a cookie on your device that will expire in 1 hour.', 'error_451').'</p>';
