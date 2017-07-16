@@ -77,10 +77,15 @@ function sanitize_comma_separated($input) {
 /* writes array data to JSON */
 function write_json($data, $filename) {
     $plugin_dir = realpath(dirname(__FILE__));
-    $handler = fopen("$plugin_dir/$filename", "w+");
-    fwrite($handler, json_encode($data));
-    fclose($handler);
-    return true;
+	if (is_writable($plugin_dir/$filename)) {
+		$handler = fopen("$plugin_dir/$filename", "w+");
+		fwrite($handler, json_encode($data));
+		fclose($handler);
+		return true;
+	} else {
+        _e('The JSON file containing post ids which are blocked cannot be written. Please make sure that the plugin directory is writable by the webserver.', 'error_451');
+		return false;
+	}
 }
 
 /* read arraay from JSON */
@@ -111,9 +116,7 @@ function find_blocked_content_ids() {
         $blocked_content_ids[$i]['blocked_countries'] = get_post_meta( $post->ID, 'error_451_blocking_countries', true);
         $i++;
     }
-    if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
-        echo "Write of JSON file failed.";
-    }
+    write_json($blocked_content_ids, $cfg['json_filename']);
 }
 
 // save all blocked content to JSON file when updating a post.
