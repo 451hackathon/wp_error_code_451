@@ -44,3 +44,4 @@ blocked-by contains the domain, blocking-authority contains the URI to the autho
   - Think about advertising the existence of the JSON file in wp_head ? -> but we don't have a spec for this, so it might not be that useful right now.
 * scheduled block: add an expiry date for the block
 * what if a page is blocked in two different countries for 2 different reasons?
+* Freegeoip API has arbitrary limit of 15,000 queries per hour. Implementing geolocation in plugin would ensure limit never reached (Priority: Very low.)
