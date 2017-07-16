@@ -175,7 +175,7 @@ add_action( 'loop_end', function( WP_Query $query ) {
        remove_filter( 'the_content', 'alter_censored_content' );
    }
    if ( has_filter( 'post_thumbnail_html', 'alter_censored_thumbnail' ) ) {
-       remove_filter( 'the_title', 'alter_censored_title' );
+       remove_filter( 'the_title', 'alter_censored_thumbnail' );
    }
 });
 
