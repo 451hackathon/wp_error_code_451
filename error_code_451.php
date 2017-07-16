@@ -11,7 +11,7 @@ Domain Path: /languages/
 */
 
 /*
-    Copyright 2017 Ulrike <u@451f.org>, Tara
+    Copyright 2017 Ulrike <u@451f.org>, Tara <me@tarakyiee.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as
