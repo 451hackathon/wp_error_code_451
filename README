@@ -4,7 +4,9 @@ This plugin aims at making it easier for Wordpress site administrators to mark p
 
 ## What does the user see?
 
-The user gets served a page telling them "Error 451 - unavailable for legal reasons", optionally it will display the blocking authority and a description.
+On a single page, the user gets served a page telling them "Error 451 - unavailable for legal reasons", optionally it will display the blocking authority and a description.
+
+What happens to a post in a loop? When in a category or archive, we will display altered post content und post title, so that censorship becomes visible.
 
 ## RFC
 
@@ -20,12 +22,7 @@ We serve two additional headers: blocked-by and blocking-authority.
 blocked-by contains the domain, blocking-authority contains the URI to the authority that has requested the block.
 
 ## TODO
- * What happens to a post in a loop?
-  -> we will only block the single resource.
-  -> when in a category or archive, we will display pn altered post content und post title, so that censorship becomes visible.
-* externalize JS
 * Modify the Readme format to match Wordpress' requirements
-* Make the error message translateable
 * report to the crawler:
   - Which information should be public and which obfuscated?
   - Tell the user what information they are sending and advertise them that this might be problematic in some jurisdictions to report.
