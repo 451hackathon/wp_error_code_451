@@ -33,7 +33,7 @@ $cfg['plugin_version'] = "0.1";
 
 /* Plugin l10n */
 function error_code_451_init() {
-    $plugin_dir = basename(dirname(__FILE__));
+   	$plugin_dir = plugins_url('', __FILE__);
     load_plugin_textdomain( 'error_451', false, "$plugin_dir/languages" );
 }
 add_action('plugins_loaded', 'error_code_451_init');
@@ -205,6 +205,7 @@ function error_451_check_blocked() {
         if( in_array($client_geo_origin, $blocked_countries) || empty($blocked_countries[0]) ) {
             $error_code = 451;
     		$site_url = site_url();
+   			$script_url = plugins_url('', __FILE__).'/js/error_451.js';
     		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
     		$blocking_description = get_post_meta($post_id, 'error_451_blocking_description', true);
 
@@ -214,16 +215,7 @@ function error_451_check_blocked() {
 
     		// redirect to get the correct HTTP status code for this page.
     		wp_redirect("/451", 451);
-    		$user_error_message  = '<html><head>
-                <script type="text/javascript">
-                  function setIgnore() {
-                      var date = new Date();
-		                  date.setTime(date.getTime()+(30*24*60*60*1000));
-		                  var expires = ";"+date.toGMTString();
-                      document.cookie = "ignore=1"+expires+"; path=/";
-                      location.reload();
-                  }
-                </script>
+    		$user_error_message  = '<html><head><script type="text/javascript" src="'.$script_url.'"></script>
             </head><body><h1>451 Unavailable For Legal Reasons</h1>';
     		$user_error_message .= '<p>This status code indicates that the server is denying access to the resource as a consequence of a legal demand.</p>';
     		if(!empty($blocking_description)) {
@@ -234,7 +226,7 @@ function error_451_check_blocked() {
     		}
         $options = get_option('error_code_451_option_name');
         if($options['CSV']) {
-              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setIgnore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
+              $user_error_message .= '<p><strong>If you believe this message is in error and that you are legally entitled to access the content, click <a href="#" onclick="setError451Ignore()">here.</a> (NOTE: THIS WILL SET A COOKIE ON YOUR DEVICE THAT WILL EXPIRE IN 30 DAYS.)</strong></p>';
         }
     		$user_error_message .= '<p>On an unrelated note, <a href="https://gettor.torproject.org/">Get Tor.</a></p></body></html>';
     		echo $user_error_message;
@@ -242,6 +234,13 @@ function error_451_check_blocked() {
         }
     }
 }
+
+// call javascript
+function error_451_scripts() {
+   wp_register_script( 'blocked', plugins_url('', __FILE__).'/js/error_451.js', 0, 0, true );
+   wp_enqueue_script( 'blocked' );
+}
+add_action( 'wp_enqueue_scripts', 'error_451_scripts' );
 
 /* Check for blocked content on page load */
 add_action( 'init', 'error_451_check_blocked');
@@ -422,13 +421,6 @@ class errorCode451SettingsPage {
             array( $this, 'print_section_info' ), // Callback
             'error-code-451-settings' // Page
         );
-  /*      add_settings_field(
-            'API_EMAIL',
-            'Censor Email',
-            array( $this, 'api_email_callback' ),
-            'error-code-451-settings',
-            'error_code_451_section_general'
-        );*/
         add_settings_field(
             'REPORTING_URL',
             'Reporting URL',
@@ -436,13 +428,6 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
-/*        add_settings_field(
-            'HOST',
-            'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
-            array( $this, 'host_callback' ),
-            'error-code-451-settings',
-            'error_code_451_section_general'
-        );*/
         add_settings_field(
             //ClientSideVerification
             'CSV',
@@ -451,6 +436,25 @@ class errorCode451SettingsPage {
             'error-code-451-settings',
             'error_code_451_section_general'
         );
+  /*
+      Legacy settings fields, remove for cleanup or reuse if neccesary
+
+      add_settings_field(
+            'API_EMAIL',
+            'Censor Email',
+            array( $this, 'api_email_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+
+/*        add_settings_field(
+            'HOST',
+            'HOST URL or IP (no protocol, no trailing slash, i.e. blocked.example.io)',
+            array( $this, 'host_callback' ),
+            'error-code-451-settings',
+            'error_code_451_section_general'
+        );*/
+
   /*      add_settings_field(
             'GLOBAL',
             'Check this box if you REALLY REALLY like cake.',
@@ -479,33 +483,41 @@ class errorCode451SettingsPage {
      * Print the Section text
      */
     public function print_section_info() {
-        print _e('If you wish to report censorship instances to a public collector please add the URL here. Example: https://registry.wirecdn.com/report');
+        print _e('<p>If you wish to report censorship instances to a public collector please add the URL here.</p> <p><strong>Example: https://registry.wirecdn.com/report</strong></p><p>Enabling this will send the following information to the collector:</p> <ul><li>- Site Home URL</url><li>- Date and time</li><li>- Blocked URL</li><li>- Description of blocking (If provided)</li><li>- URL of Authority requesting the blocking  (If provided)</li><li>- List of Countries where Content is Blocked</li><ul> ');
     }
+
     /**
      * Get the settings option array and print one of its values
      */
-    public function api_email_callback() {
-        printf(
-            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
-            esc_attr( $this->options['API_EMAIL'])
-        );
-    }
     public function api_key_callback() {
         printf(
             '<input type="text" id="REPORTING_URL" name="error_code_451_option_name[REPORTING_URL]" value="%s" class="regular-text ltr" />',
             esc_attr( $this->options['REPORTING_URL'])
         );
     }
+
+    public function CSV_callback() {
+	    $options = get_option('error_code_451_option_name');
+        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
+    }
+
+/*
+  Legacy code, remove for cleanup or reuse if neccesary
+
+ public function api_email_callback() {
+        printf(
+            '<input type="text" id="API_EMAIL" name="error_code_451_option_name[API_EMAIL]" value="%s" class="regular-text ltr" />',
+            esc_attr( $this->options['API_EMAIL'])
+        );
+
+
     public function host_callback() {
         printf(
             '<input type="text" id="HOST" name="error_code_451_option_name[HOST]" value="%s" class="regular-text ltr"  />',
             esc_attr( $this->options['HOST'])
         );
-    }
-    public function CSV_callback() {
-	    $options = get_option('error_code_451_option_name');
-        echo '<input name="error_code_451_option_name[CSV]" id="CSV" type="checkbox" value="1" ' . checked( 1, $options['CSV'], false ) . ' /> yes';
-    }
+    }  }
+
     public function global_callback() {
 	    $options = get_option('error_code_451_option_name');
         echo '<input name="error_code_451_option_name[GLOBAL]" id="GLOBAL" type="checkbox" value="1" ' . checked( 1, $options['GLOBAL'], false ) . ' /> sure';
@@ -516,7 +528,7 @@ class errorCode451SettingsPage {
 	    '<input type="number" id="resultspage_'.$locale.'" name="error_code_451_option_name[resultspage_'.$locale.']" value="%s" class="regular-text ltr"  />',
 	    esc_attr( $this->options["resultspage_$locale"])
 	    );
-    }
+    }  */
 }
 
 if( is_admin() )
