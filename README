@@ -20,11 +20,6 @@ Site admins can check a box which will allow visitors to see blocked content any
 
 https://tools.ietf.org/html/rfc7725
 
- When an entity blocks access to a resource and returns status 451, it
- SHOULD include a "Link" HTTP header field [RFC5988] whose value is a
- URI reference [RFC3986] identifying itself.  When used for this
- purpose, the "Link" header field MUST have a "rel" parameter whose
- value is "blocked-by".
-
 We serve two additional headers: blocked-by and blocking-authority.
 blocked-by contains the domain, blocking-authority contains the URI to the authority that has requested the block.
+The blocking-authority header is not yet in the RFC.
