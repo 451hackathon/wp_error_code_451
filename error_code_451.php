@@ -549,6 +549,8 @@ function error_451_report_blocking_data( $post_id, $post ) {
     }
 }
 
+add_action( 'save_post', 'error_451_report_blocking_data', 10, 2 );
+
 
 function report_blocking ($authority, $countries, $description, $url, $siteurl) {
         global $cfg;
@@ -586,5 +588,4 @@ function report_blocking ($authority, $countries, $description, $url, $siteurl) 
     }
 
 
-    add_action( 'save_post', 'error_451_report_blocking_data', 10, 2 );
 ?>
