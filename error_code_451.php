@@ -214,6 +214,7 @@ function error_451_check_blocked() {
 		$error_code = 451;
 		$site_url = site_url();
 		$script_url = plugins_url('', __FILE__).'/js/error_451.js';
+		$blocking_authority = get_post_meta($post_id, 'error_451_blocking_authority', true);
 
 		// send additional headers
 		header('Link: <'.$site_url.'>; rel="blocked-by"', false, $error_code);
