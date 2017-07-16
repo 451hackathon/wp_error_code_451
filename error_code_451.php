@@ -4,9 +4,9 @@ Plugin Name: Error Code 451
 Plugin URI: http://github.com/451hackathon/wpplugin
 Description: Wordpress plugin to block pages using Error Code 451.
 Version: 0.1
-Author: Ulrike Uhlig
+Author: Ulrike, Tara
 License: GPL3+
-Text Domain: error_code_451
+Text Domain: error_451
 Domain Path: /languages/
 */
 
