@@ -106,7 +106,7 @@ function find_blocked_content_ids() {
 	$blocked_content_query = new WP_Query( $blocked_content_args );
     foreach ($blocked_content_query->posts as $post) {
 		$blocked_content_ids[$i]['post_id'] = $post->ID;
-		// fixme: we need to add the country codes in which the posts are blocked as well as some other information which we want to display in the loop.
+		$blocked_content_ids[$i]['blocked_countries'] = get_post_meta( $post->ID, 'error_451_blocking_countries', true);
 		$i++;
     }
     if(write_json($blocked_content_ids, $cfg['json_filename']) !== true) {
